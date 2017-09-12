@@ -2,9 +2,6 @@ package com.eginez.yacta
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
-import com.oracle.bmc.core.ComputeClient
-import com.oracle.bmc.core.model.LaunchInstanceDetails
-import com.oracle.bmc.core.requests.LaunchInstanceRequest
 import com.oracle.bmc.objectstorage.ObjectStorageClient
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
 import com.oracle.bmc.objectstorage.requests.CreateBucketRequest
@@ -16,9 +13,14 @@ import java.io.File
 annotation class ResourceMarker
 
 
-val executionGraph : MutableList<Any> = mutableListOf()
+val executionGraph : MutableList<Creatable> = mutableListOf()
+
+interface Creatable {
+    fun create()
+}
+
 @ResourceMarker
-class Resource {
+class Resource{
 
     var profile = "DEFAULT"
     var filePath = "~/.oraclebmc/config"
@@ -27,27 +29,23 @@ class Resource {
     var region: Region? = null
 
 
-
-    fun compute(fn: Resource.() -> Unit): Unit {
-        println("Creating compute resource");
-    }
-
     fun casper(fn: Resource.() -> Unit) {
         fn()
-
+        println(executionGraph)
+        executionGraph.forEach { it.create() }
     }
 
     fun bucket(fn: BucketResource.() -> Unit) {
         val client = ObjectStorageClient(provider)
         client.setRegion(region)
         val n = BucketResource(client)
+        executionGraph.add(n)
         n.apply(fn)
-        n.create()
     }
 }
 
 
-data class BucketResource(val client: ObjectStorageClient) {
+class BucketResource(val client: ObjectStorageClient): Creatable {
     var name: String = ""
     var compartmentId: String = ""
     var accessType : CreateBucketDetails.PublicAccessType? = null
@@ -61,7 +59,7 @@ data class BucketResource(val client: ObjectStorageClient) {
         return client.getNamespace(GetNamespaceRequest.builder().build()).value
     }
 
-    fun create() {
+    override fun create() {
         if(namespace.isNullOrBlank()) {
             namespace = defaultNamespace()
         }
@@ -78,28 +76,36 @@ data class BucketResource(val client: ObjectStorageClient) {
     fun obj(fn: ObjectResource.() -> Unit) {
         val o = ObjectResource(client, this)
         o.apply(fn)
-        o.create()
-
+        executionGraph.add(o)
     }
 
 }
 
-data class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource) {
+class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource): Creatable {
     var name: String = ""
-    var accessType : CreateBucketDetails.PublicAccessType? = null
     var namespace: String? = null
-    var file = File("/Users/eginez/Documents/images/nightsky_1.jpeg")
+    var file: File? = null
 
-    fun create() {
+    override fun create() {
+        if (file == null) {
+            throw IllegalArgumentException("file property has to be set")
+        }
+
+
+        println("Creating object ${this}")
         val request = PutObjectRequest.builder()
                 .bucketName(parentBucket.name)
                 .namespaceName(parentBucket.namespace)
-                .objectName(name)
-                .contentLength(file.length())
-                .putObjectBody(file.inputStream())
+                .objectName(file?.name)
+                .contentLength(file?.length())
+                .putObjectBody(file?.inputStream())
                 .build()
 
         client.putObject(request)
+    }
+
+    override fun toString(): String {
+        return "ObjectResource(parentBucket=$parentBucket, name='$name', namespace=$namespace, file=$file)"
     }
 }
 
