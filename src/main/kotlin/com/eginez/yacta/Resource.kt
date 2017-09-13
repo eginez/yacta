@@ -2,11 +2,10 @@ package com.eginez.yacta
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
+import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.ObjectStorageClient
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
-import com.oracle.bmc.objectstorage.requests.CreateBucketRequest
-import com.oracle.bmc.objectstorage.requests.GetNamespaceRequest
-import com.oracle.bmc.objectstorage.requests.PutObjectRequest
+import com.oracle.bmc.objectstorage.requests.*
 import java.io.File
 
 @DslMarker
@@ -59,9 +58,27 @@ class BucketResource(val client: ObjectStorageClient): Creatable {
         return client.getNamespace(GetNamespaceRequest.builder().build()).value
     }
 
+    fun isPresent(): Boolean {
+        val request = GetBucketRequest.builder()
+                .bucketName(name)
+                .namespaceName(namespace)
+                .build()
+        try {
+            val response = client.getBucket(request)
+            return true
+        } catch (ex: BmcException) {
+            println("Failed to get bucket: ${ex.statusCode}")
+            return false
+        }
+    }
     override fun create() {
         if(namespace.isNullOrBlank()) {
             namespace = defaultNamespace()
+        }
+
+        if (isPresent()) {
+            println("Bucket already there. Skipping creation")
+            return
         }
 
         println("Creating bucket ${this}")
@@ -92,6 +109,11 @@ class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketRe
         }
 
 
+        if (!isDifferent()) {
+            println("Skip creating object")
+            return
+        }
+
         println("Creating object ${this}")
         val request = PutObjectRequest.builder()
                 .bucketName(parentBucket.name)
@@ -103,6 +125,25 @@ class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketRe
 
         client.putObject(request)
     }
+
+    private fun isDifferent(): Boolean {
+        val request = GetObjectRequest.builder()
+                .bucketName(parentBucket.name)
+                .namespaceName(parentBucket.namespace)
+                .objectName(file?.name)
+                .build()
+        try {
+            val response = client.getObject(request)
+            return response.contentLength != file?.length()
+        } catch (ex: BmcException) {
+            println("Failed to get bucket: ${ex.statusCode}")
+            if (ex.statusCode in 400..499) {
+                return true
+            }
+            throw ex
+        }
+    }
+
 
     override fun toString(): String {
         return "ObjectResource(parentBucket=$parentBucket, name='$name', namespace=$namespace, file=$file)"
