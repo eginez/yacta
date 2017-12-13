@@ -1,54 +1,19 @@
-package com.eginez.yacta
+package com.eginez.yacta.resources
 
-import com.oracle.bmc.Region
-import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
-import com.oracle.bmc.model.BmcException
-import com.oracle.bmc.objectstorage.ObjectStorageClient
+
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
 import com.oracle.bmc.objectstorage.requests.*
+import com.oracle.bmc.model.BmcException
+import com.oracle.bmc.objectstorage.ObjectStorageClient
 import java.io.File
 
-@DslMarker
-annotation class ResourceMarker
+class BucketResource(val client: ObjectStorageClient): Resource {
 
-
-val executionGraph : MutableList<Creatable> = mutableListOf()
-
-interface Creatable {
-    fun create()
-}
-
-@ResourceMarker
-class Resource{
-
-    var profile = "DEFAULT"
-    var filePath = "~/.oraclebmc/config"
-    var provider = ConfigFileAuthenticationDetailsProvider(filePath, profile)
-    val DEFAULT_REGION = Region.US_PHOENIX_1
-    var region: Region? = null
-
-
-    fun casper(fn: Resource.() -> Unit) {
-        fn()
-        println(executionGraph)
-        executionGraph.forEach { it.create() }
-    }
-
-    fun bucket(fn: BucketResource.() -> Unit) {
-        val client = ObjectStorageClient(provider)
-        client.setRegion(region)
-        val n = BucketResource(client)
-        executionGraph.add(n)
-        n.apply(fn)
-    }
-}
-
-
-class BucketResource(val client: ObjectStorageClient): Creatable {
     var name: String = ""
     var compartmentId: String = ""
     var accessType : CreateBucketDetails.PublicAccessType? = null
     var namespace: String? = null
+    private var id: String? = null
 
     override fun toString(): String {
         return "BucketResource(namespace='${namespace}' name='$name', compartmentId='$compartmentId', accessType=$accessType)"
@@ -56,6 +21,14 @@ class BucketResource(val client: ObjectStorageClient): Creatable {
 
     fun defaultNamespace(): String {
         return client.getNamespace(GetNamespaceRequest.builder().build()).value
+    }
+
+    override fun id(): String {
+        return name
+    }
+
+    override fun dependencies(): List<out Resource> {
+        return emptyList()
     }
 
     fun isPresent(): Boolean {
@@ -87,8 +60,13 @@ class BucketResource(val client: ObjectStorageClient): Creatable {
                 .namespaceName(namespace)
                 .createBucketDetails(details)
                 .build()
-        client.createBucket(request)
+         client.createBucket(request)
     }
+
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
 
     fun obj(fn: ObjectResource.() -> Unit) {
         val o = ObjectResource(client, this)
@@ -98,10 +76,20 @@ class BucketResource(val client: ObjectStorageClient): Creatable {
 
 }
 
-class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource): Creatable {
+class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource): Resource {
+
     var name: String = ""
     var namespace: String? = null
     var file: File? = null
+
+    override fun id(): String {
+        return name
+    }
+
+    override fun dependencies(): List<out Resource> {
+        val c = BucketResource::class.java
+        return listOf(c)
+    }
 
     override fun create() {
         if (file == null) {
@@ -124,6 +112,10 @@ class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketRe
                 .build()
 
         client.putObject(request)
+    }
+
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     private fun isDifferent(): Boolean {
@@ -149,6 +141,3 @@ class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketRe
         return "ObjectResource(parentBucket=$parentBucket, name='$name', namespace=$namespace, file=$file)"
     }
 }
-
-
-

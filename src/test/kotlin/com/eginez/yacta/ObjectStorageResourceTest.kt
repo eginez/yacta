@@ -1,19 +1,22 @@
 package com.eginez.yacta
 
+import com.eginez.yacta.resources.Oci
 import  com.oracle.bmc.objectstorage.model.CreateBucketDetails.PublicAccessType.*
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
-class ResourceTest {
+class ObjectStorageResourceTest {
 
     @Test
+    @Ignore
     fun testCreateBucket() {
-        val c = Resource()
+        val c = Oci()
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
-        c.casper {
+        c.objectStorage {
             region = DEFAULT_REGION
             bucket {
                 name = "DSLBucketOne"
@@ -27,13 +30,14 @@ class ResourceTest {
     }
 
     @Test
+    @Ignore
     fun testCreateMultiple() {
-        val c = Resource()
+        val c = Oci()
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
-        c.casper {
+        c.objectStorage {
             region = DEFAULT_REGION
             (1..5).forEach { num ->
                 bucket {
@@ -49,13 +53,14 @@ class ResourceTest {
     }
 
     @Test
+    @Ignore
     fun testBucketAndObject() {
-        val c = Resource()
+        val c = Oci()
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
-        c.casper {
+        c.objectStorage {
             region = DEFAULT_REGION
             bucket {
                 name = "DSLBucketOneFile"
@@ -78,13 +83,14 @@ class ResourceTest {
     }
 
     @Test
+    @Ignore
     fun testBucketAndMultipleObject() {
-        val c = Resource()
+        val c = Oci()
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
-        c.casper {
+        c.objectStorage {
             region = DEFAULT_REGION
             bucket {
                 name = "DSLBucketFiles"
