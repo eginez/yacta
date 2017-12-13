@@ -10,7 +10,7 @@ fun main(args: Array<String>){
 
     val oci = Oci()
     oci.region = oci.DEFAULT_REGION
-    val vcn = createVcn(oci)
+    val vcnOne = createVcn(oci)
 
     val availDomain = ""
 
@@ -25,6 +25,7 @@ fun main(args: Array<String>){
                 availabilityDomain = availDomain
                 cidrBlock = "10.0.0.0/26"
                 compartment = COMPARTMET
+                //vcn = vcnOne
                 vcn {
                     displayName = "vncForDSL"
                     compartmentId = COMPARTMET

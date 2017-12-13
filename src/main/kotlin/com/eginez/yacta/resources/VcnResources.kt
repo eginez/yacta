@@ -61,7 +61,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
 }
 
 class  SubnetResource (val client: VirtualNetworkClient): Resource {
-    private var vcnResource: VcnResource = VcnResource(client)
+    var vcn: VcnResource = VcnResource(client)
     var availabilityDomain: String = ""
     var cidrBlock: String = ""
     var compartment: String = ""
@@ -73,8 +73,8 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     var id: String = ""
 
     override fun create() {
-        vcnResource.create()
-        this.vcnId = vcnResource.id()
+        vcn.create()
+        this.vcnId = vcn.id()
         val d = toCreateSubnetDetails()
         var req = CreateSubnetRequest.builder().createSubnetDetails(d).build()
         var res = client.createSubnet(req)
@@ -102,12 +102,12 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     fun vcn(fn: VcnResource.() -> Unit): VcnResource {
         val v = VcnResource(client)
         v.apply(fn)
-        vcnResource = v
+        vcn = v
         return v
     }
 
     override fun dependencies(): List<Resource> {
-        return listOf(vcnResource as Resource)
+        return listOf(vcn as Resource)
     }
 }
 
