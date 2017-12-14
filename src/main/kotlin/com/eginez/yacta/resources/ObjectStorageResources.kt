@@ -27,7 +27,7 @@ class BucketResource(val client: ObjectStorageClient): Resource {
         return name
     }
 
-    override fun dependencies(): List<out Resource> {
+    override fun dependencies(): List<Resource> {
         return emptyList()
     }
 
@@ -86,9 +86,8 @@ class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketRe
         return name
     }
 
-    override fun dependencies(): List<out Resource> {
-        val c = BucketResource::class.java
-        return listOf(c)
+    override fun dependencies(): List<Resource> {
+        return listOf(parentBucket)
     }
 
     override fun create() {
