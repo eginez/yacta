@@ -18,9 +18,15 @@ fun main(args: Array<String>){
         availabilityDomain = availDomain
         compartment = COMPARTMET
         displayName = "DSLInstance"
+
         vnic {
             publicIp = false
             name = "privateNic"
+            subnet {
+                availabilityDomain = availDomain
+                vcn = vcnOne
+            }
+
             subnet {
                 availabilityDomain = availDomain
                 cidrBlock = "10.0.0.0/26"
@@ -36,7 +42,8 @@ fun main(args: Array<String>){
         }
     }
 
-    instance.create()
+
+    (1..5).forEach { instance.create() }
 }
 
 fun createVcn(oci: Oci): VcnResource {

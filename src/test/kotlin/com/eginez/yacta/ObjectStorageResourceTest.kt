@@ -41,7 +41,7 @@ class ObjectStorageResourceTest {
             region = DEFAULT_REGION
             (1..5).forEach { num ->
                 bucket {
-                    name = "DSLBucket$num"
+                    name = "NewDSLBucket$num"
                     compartmentId = "ocid1.compartment.oc1..aaaaaaaa6amlftmhyeeeil54oybmd5rizcruqirk73lcm3n45a5sib5ucbxa"
                     accessType = ObjectRead
                 }
