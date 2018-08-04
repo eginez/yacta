@@ -55,7 +55,8 @@ class BucketResource(val client: ObjectStorageClient): Resource {
         }
 
         println("Creating bucket ${this}")
-        val details = CreateBucketDetails(name, compartmentId, emptyMap(), accessType)
+        val details = CreateBucketDetails(name, compartmentId, emptyMap(), accessType,
+                CreateBucketDetails.StorageTier.Standard, emptyMap(), emptyMap() )
         val request = CreateBucketRequest.builder()
                 .namespaceName(namespace)
                 .createBucketDetails(details)
