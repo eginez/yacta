@@ -1,5 +1,6 @@
-package com.eginez.yacta.resources
+package com.eginez.yacta.resources.oci
 
+import com.eginez.yacta.resources.Resource
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.CreateSubnetDetails
 import com.oracle.bmc.core.model.CreateVcnDetails
@@ -9,6 +10,7 @@ import com.oracle.bmc.core.requests.CreateSubnetRequest
 import com.oracle.bmc.core.requests.CreateVcnRequest
 import com.oracle.bmc.core.requests.DeleteVcnRequest
 import com.oracle.bmc.core.requests.GetVcnRequest
+import com.oracle.bmc.identity.model.AvailabilityDomain
 
 class  VcnResource (val client: VirtualNetworkClient): Resource {
 
@@ -35,7 +37,6 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
         id = client.createVcn(request).vcn.id
         val waiter = client.waiters.forVcn(GetVcnRequest.builder().vcnId(id).build(), Vcn.LifecycleState.Available)
         waiter.execute()
-
     }
 
     override fun destroy() {
@@ -55,14 +56,23 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
         return emptyList()
     }
 
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun toString(): String {
         return "VcnResource(displayName='$displayName', compartmentId='$compartmentId', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
     }
 }
 
 class  SubnetResource (val client: VirtualNetworkClient): Resource {
+
     var vcn: VcnResource = VcnResource(client)
-    var availabilityDomain: String = ""
+    lateinit var availabilityDomain: AvailabilityDomain
     var cidrBlock: String = ""
     var compartment: String = ""
     var vcnId: String = ""
@@ -73,17 +83,19 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     var id: String = ""
 
     override fun create() {
-        vcn.create()
-        this.vcnId = vcn.id()
         val d = toCreateSubnetDetails()
-        var req = CreateSubnetRequest.builder().createSubnetDetails(d).build()
-        var res = client.createSubnet(req)
+
+        dependencies().forEach { it.create() }
+        this.vcnId = vcn.id()
+
+        val req = CreateSubnetRequest.builder().createSubnetDetails(d).build()
+        val res = client.createSubnet(req)
         id = res.subnet.id
     }
 
     private fun toCreateSubnetDetails(): CreateSubnetDetails? {
         return CreateSubnetDetails.builder()
-                .availabilityDomain(availabilityDomain)
+                .availabilityDomain(availabilityDomain.name)
                 .cidrBlock(cidrBlock)
                 .compartmentId(compartment)
                 .vcnId(vcnId)
@@ -109,6 +121,14 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     override fun dependencies(): List<Resource> {
         return listOf(vcn as Resource)
     }
+
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }
 
 class  VnicResource (val client: VirtualNetworkClient): Resource {
@@ -121,9 +141,9 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
 
     override fun create() {
         //create dependencies
-        subnet?.create()
+        dependencies().forEach { it.create() }
+
         subnetId = subnet?.id.orEmpty()
-        //no op
         return
     }
 
@@ -153,5 +173,13 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
         v.apply(fn)
         subnet = v
         return v
+    }
+
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

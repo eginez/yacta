@@ -1,8 +1,10 @@
-package com.eginez.yacta.resources
+package com.eginez.yacta.resources.oci
 
+import com.eginez.yacta.resources.Resource
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
 import com.oracle.bmc.core.VirtualNetworkClient
+import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.objectstorage.ObjectStorageClient
 
 @DslMarker
@@ -11,18 +13,12 @@ annotation class ResourceMarker
 
 val executionGraph : MutableList<Resource> = mutableListOf()
 
-interface Resource {
-    fun create()
-    fun destroy()
-    fun id(): String
-    fun dependencies(): List<Resource>
-}
 
 @ResourceMarker
 class Oci {
 
     var profile = "DEFAULT"
-    var filePath = "~/.oraclebmc/config"
+    var filePath = "~/.oci/config"
     var provider = ConfigFileAuthenticationDetailsProvider(filePath, profile)
     val DEFAULT_REGION = Region.US_PHOENIX_1
     var region: Region? = null
@@ -42,7 +38,7 @@ class Oci {
         n.apply(fn)
     }
 
-    fun vcn(fn: VcnResource.() -> Unit): Resource{
+    fun vcn(fn: VcnResource.() -> Unit): Resource {
         val client = VirtualNetworkClient(provider)
         client.setRegion(region)
         val v = VcnResource(client)

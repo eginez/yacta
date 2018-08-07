@@ -1,7 +1,8 @@
 package com.eginez.yacta
 
-import com.eginez.yacta.resources.Oci
-import com.eginez.yacta.resources.VcnResource
+import com.eginez.yacta.resources.oci.AvailabilityDomains
+import com.eginez.yacta.resources.oci.Oci
+import com.eginez.yacta.resources.oci.VcnResource
 
 
 val COMPARTMET = "ocidv1:tenancy:oc1:phx:1460406592660:aaaaaaaab4faofrfkxecohhjuivjq262pu"
@@ -12,7 +13,7 @@ fun main(args: Array<String>){
     oci.region = oci.DEFAULT_REGION
     val vcnOne = createVcn(oci)
 
-    val availDomain = ""
+    val availDomain = AvailabilityDomains(oci.provider).get().first()
 
     val instance = oci.instance {
         availabilityDomain = availDomain
@@ -26,24 +27,10 @@ fun main(args: Array<String>){
                 availabilityDomain = availDomain
                 vcn = vcnOne
             }
-
-            subnet {
-                availabilityDomain = availDomain
-                cidrBlock = "10.0.0.0/26"
-                compartment = COMPARTMET
-                //vcn = vcnOne
-                vcn {
-                    displayName = "vncForDSL"
-                    compartmentId = COMPARTMET
-                    cidrBlock = "10.0.0.0/26"
-                    dnsLabel = "DSLDnsLabel"
-                }
-            }
         }
     }
 
-
-    (1..5).forEach { instance.create() }
+    instance.create()
 }
 
 fun createVcn(oci: Oci): VcnResource {

@@ -1,6 +1,6 @@
 package com.eginez.yacta
 
-import com.eginez.yacta.resources.Oci
+import com.eginez.yacta.resources.oci.Oci
 import  com.oracle.bmc.objectstorage.model.CreateBucketDetails.PublicAccessType.*
 import org.junit.Ignore
 import org.junit.Test
@@ -19,8 +19,8 @@ class ObjectStorageResourceTest {
         c.objectStorage {
             region = DEFAULT_REGION
             bucket {
-                name = "DSLBucketOne"
-                compartmentId = "ocid1.compartment.oc1..aaaaaaaa6amlftmhyeeeil54oybmd5rizcruqirk73lcm3n45a5sib5ucbxa"
+                name = "EGZBucketOne"
+                compartmentId = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
                 accessType = ObjectRead
             }
         }

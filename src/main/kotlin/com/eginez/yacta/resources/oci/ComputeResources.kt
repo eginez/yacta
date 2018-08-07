@@ -1,14 +1,17 @@
-package com.eginez.yacta.resources
+package com.eginez.yacta.resources.oci
 
+import com.eginez.yacta.resources.Resource
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
 import com.oracle.bmc.core.ComputeClient
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.LaunchInstanceDetails
 import com.oracle.bmc.core.requests.LaunchInstanceRequest
+import com.oracle.bmc.identity.model.AvailabilityDomain
 
 class InstanceResource (val provider: ConfigFileAuthenticationDetailsProvider, val region: Region?): Resource {
-    var availabilityDomain: String = ""
+
+    lateinit var availabilityDomain: AvailabilityDomain
     var compartment: String = ""
     var image: String = ""
     var shape: String =""
@@ -26,7 +29,7 @@ class InstanceResource (val provider: ConfigFileAuthenticationDetailsProvider, v
     override fun create() {
         client.setRegion(region)
         val builder = LaunchInstanceDetails.builder()
-        builder.availabilityDomain(availabilityDomain)
+        builder.availabilityDomain(availabilityDomain.name)
         builder.compartmentId(compartment)
         builder.imageId(image)
         builder.shape(shape)
@@ -36,9 +39,13 @@ class InstanceResource (val provider: ConfigFileAuthenticationDetailsProvider, v
         builder.metadata(metadata)
         builder.extendedMetadata(extendedMetadata)
 
+
+        dependencies().forEach { it.create() }
+
         if (vnic != null){
             builder.createVnicDetails(vnic?.toVnicDetails())
         }
+
 
         val req = LaunchInstanceRequest.builder()
                 .launchInstanceDetails(builder.build())
@@ -57,6 +64,14 @@ class InstanceResource (val provider: ConfigFileAuthenticationDetailsProvider, v
 
     override fun dependencies(): List<Resource> {
         return listOf(vnic as Resource)
+    }
+
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     fun vnic(fn: VnicResource.() -> Unit): VnicResource {

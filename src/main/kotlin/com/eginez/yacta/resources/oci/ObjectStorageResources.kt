@@ -1,6 +1,7 @@
-package com.eginez.yacta.resources
+package com.eginez.yacta.resources.oci
 
 
+import com.eginez.yacta.resources.Resource
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
 import com.oracle.bmc.objectstorage.requests.*
 import com.oracle.bmc.model.BmcException
@@ -75,10 +76,17 @@ class BucketResource(val client: ObjectStorageClient): Resource {
         executionGraph.add(o)
     }
 
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
 }
 
 class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource): Resource {
-
     var name: String = ""
     var namespace: String? = null
     var file: File? = null
@@ -135,6 +143,15 @@ class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketRe
             throw ex
         }
     }
+
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
 
 
     override fun toString(): String {
