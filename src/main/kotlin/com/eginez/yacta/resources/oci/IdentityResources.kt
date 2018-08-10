@@ -2,10 +2,10 @@ package com.eginez.yacta.resources.oci
 
 import com.eginez.yacta.resources.DataProvider
 import com.eginez.yacta.resources.Resource
+import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.identity.IdentityClient
 import com.oracle.bmc.identity.model.AvailabilityDomain
-import com.oracle.bmc.identity.model.Compartment
 import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
 
 class AvailabilityDomains(configuration: AuthenticationDetailsProvider): DataProvider<Set<AvailabilityDomain>> {
@@ -13,6 +13,7 @@ class AvailabilityDomains(configuration: AuthenticationDetailsProvider): DataPro
     private val client = IdentityClient(configuration)
 
     override fun get(): Set<AvailabilityDomain> {
+        client.setRegion(Region.US_PHOENIX_1)
         val availabilityDomainsRequest = ListAvailabilityDomainsRequest.builder()
                 .compartmentId(compartment.id)
                 .build()
@@ -47,4 +48,12 @@ class Compartment: Resource {
     override fun id(): String {
         return id
     }
+}
+
+
+@ResourceMarker
+fun compartment(fn: Compartment.() -> Unit): Compartment{
+    val c = com.eginez.yacta.resources.oci.Compartment()
+    c.apply(fn)
+    return c
 }

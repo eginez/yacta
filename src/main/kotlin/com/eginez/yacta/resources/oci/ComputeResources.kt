@@ -12,7 +12,7 @@ import com.oracle.bmc.identity.model.AvailabilityDomain
 class InstanceResource (val provider: ConfigFileAuthenticationDetailsProvider, val region: Region?): Resource {
 
     lateinit var availabilityDomain: AvailabilityDomain
-    var compartment: String = ""
+    lateinit var compartment: Compartment
     var image: String = ""
     var shape: String =""
     var vnic: VnicResource? = null
@@ -30,7 +30,7 @@ class InstanceResource (val provider: ConfigFileAuthenticationDetailsProvider, v
         client.setRegion(region)
         val builder = LaunchInstanceDetails.builder()
         builder.availabilityDomain(availabilityDomain.name)
-        builder.compartmentId(compartment)
+        builder.compartmentId(compartment.id)
         builder.imageId(image)
         builder.shape(shape)
         builder.displayName(displayName)

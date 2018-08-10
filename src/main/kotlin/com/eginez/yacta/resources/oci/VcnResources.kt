@@ -15,7 +15,7 @@ import com.oracle.bmc.identity.model.AvailabilityDomain
 class  VcnResource (val client: VirtualNetworkClient): Resource {
 
     var displayName: String = ""
-    var compartmentId: String = ""
+    lateinit var compartment: Compartment
     var cidrBlock: String = ""
     var dnsLabel: String? = null
     private var id: String? = null
@@ -24,7 +24,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
 
         var details = CreateVcnDetails.builder()
                 .cidrBlock(cidrBlock)
-                .compartmentId(compartmentId)
+                .compartmentId(compartment.id)
                 .displayName(displayName)
 
         if (!dnsLabel.isNullOrBlank()) {
@@ -37,6 +37,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
         id = client.createVcn(request).vcn.id
         val waiter = client.waiters.forVcn(GetVcnRequest.builder().vcnId(id).build(), Vcn.LifecycleState.Available)
         waiter.execute()
+        println("Created: " + this)
     }
 
     override fun destroy() {
@@ -65,7 +66,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
     }
 
     override fun toString(): String {
-        return "VcnResource(displayName='$displayName', compartmentId='$compartmentId', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
+        return "VcnResource(displayName='$displayName', compartmentId='${compartment.id}', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
     }
 }
 
@@ -74,7 +75,7 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     var vcn: VcnResource = VcnResource(client)
     lateinit var availabilityDomain: AvailabilityDomain
     var cidrBlock: String = ""
-    var compartment: String = ""
+    lateinit var compartment: Compartment
     var vcnId: String = ""
     var prohibitPubicIp: Boolean = false
     var routeTableId: String = ""
@@ -83,21 +84,21 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     var id: String = ""
 
     override fun create() {
-        val d = toCreateSubnetDetails()
-
         dependencies().forEach { it.create() }
         this.vcnId = vcn.id()
 
+        val d = toCreateSubnetDetails()
         val req = CreateSubnetRequest.builder().createSubnetDetails(d).build()
         val res = client.createSubnet(req)
         id = res.subnet.id
+        println("Created: " + this)
     }
 
     private fun toCreateSubnetDetails(): CreateSubnetDetails? {
         return CreateSubnetDetails.builder()
                 .availabilityDomain(availabilityDomain.name)
                 .cidrBlock(cidrBlock)
-                .compartmentId(compartment)
+                .compartmentId(compartment.id)
                 .vcnId(vcnId)
                 .build()
     }
@@ -144,6 +145,7 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
         dependencies().forEach { it.create() }
 
         subnetId = subnet?.id.orEmpty()
+        println("Created: " + this)
         return
     }
 

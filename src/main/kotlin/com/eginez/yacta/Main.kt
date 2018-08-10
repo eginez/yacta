@@ -1,46 +1,53 @@
 package com.eginez.yacta
 
-import com.eginez.yacta.resources.oci.AvailabilityDomains
-import com.eginez.yacta.resources.oci.Oci
-import com.eginez.yacta.resources.oci.VcnResource
+import com.eginez.yacta.resources.oci.*
 
 
-val COMPARTMET = "ocidv1:tenancy:oc1:phx:1460406592660:aaaaaaaab4faofrfkxecohhjuivjq262pu"
+val COMPARTMET_ID = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
 fun main(args: Array<String>){
     println("Starting")
 
     val oci = Oci()
     oci.region = oci.DEFAULT_REGION
-    val vcnOne = createVcn(oci)
 
-    val availDomain = AvailabilityDomains(oci.provider).get().first()
+    val homeCompartment =  compartment {
+        id = COMPARTMET_ID
+    }
+
+    val vcnOne = oci.vcn{
+        displayName = "VcnFromDSL"
+        compartment = homeCompartment
+        cidrBlock = "10.0.0.0/16"
+        dnsLabel = displayName
+    }
+
+    val availDomains = AvailabilityDomains(oci.provider)
+    availDomains.compartment = homeCompartment
+    val firstAvailabilityDomain = availDomains.get().first()
+
 
     val instance = oci.instance {
-        availabilityDomain = availDomain
-        compartment = COMPARTMET
+        //TODO finish implementing this fun
+        availabilityDomain = firstAvailabilityDomain
+        compartment = homeCompartment
         displayName = "DSLInstance"
+        image = ""
+        hostLabel = "theHost"
+        shape = ""
 
-        vnic {
+        vnic = vnic {
             publicIp = false
             name = "privateNic"
             subnet {
-                availabilityDomain = availDomain
+                cidrBlock = "10.0.0.0/24"
+                availabilityDomain = firstAvailabilityDomain
+                compartment = homeCompartment
                 vcn = vcnOne
             }
         }
     }
 
     instance.create()
+    vcnOne.destroy()
 }
 
-fun createVcn(oci: Oci): VcnResource {
-    val vcn = oci.vcn{
-        displayName = "VcnFromDSL"
-        compartmentId = COMPARTMET
-        cidrBlock = "172.0.0.0/16"
-        dnsLabel = displayName
-    }
-    vcn.create()
-    println("Vnc created: $vcn")
-    return vcn as VcnResource
-}

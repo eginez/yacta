@@ -38,7 +38,7 @@ class Oci {
         n.apply(fn)
     }
 
-    fun vcn(fn: VcnResource.() -> Unit): Resource {
+    fun vcn(fn: VcnResource.() -> Unit): VcnResource {
         val client = VirtualNetworkClient(provider)
         client.setRegion(region)
         val v = VcnResource(client)
