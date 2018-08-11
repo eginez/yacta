@@ -1,6 +1,8 @@
 package com.eginez.yacta
 
 import com.eginez.yacta.resources.oci.*
+import javax.script.ScriptEngineManager
+import kotlin.system.measureTimeMillis
 
 
 val COMPARTMET_ID = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
@@ -47,7 +49,15 @@ fun main(args: Array<String>){
         }
     }
 
-    instance.create()
-    vcnOne.destroy()
+    var measureTimeMillis = measureTimeMillis {
+        var engineByExtension = ScriptEngineManager().getEngineByExtension("kts")!!
+        var eval = engineByExtension.eval("1 + 1")
+        print(eval)
+    }
+
+    println(measureTimeMillis)
+
+    //instance.create()
+    //vcnOne.destroy()
 }
 

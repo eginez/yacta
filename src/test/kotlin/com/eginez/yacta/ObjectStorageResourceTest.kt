@@ -1,7 +1,7 @@
 package com.eginez.yacta
 
 import com.eginez.yacta.resources.oci.Oci
-import  com.oracle.bmc.objectstorage.model.CreateBucketDetails.PublicAccessType.*
+import  com.oracle.bmc.objectstorage.model.CreateBucketDetails.PublicAccessType.ObjectRead
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
