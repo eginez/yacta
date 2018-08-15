@@ -11,16 +11,23 @@ import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
 class AvailabilityDomains(configuration: AuthenticationDetailsProvider): DataProvider<Set<AvailabilityDomain>> {
     lateinit var compartment: Compartment
     private val client = IdentityClient(configuration)
+    var region = Region.US_PHOENIX_1
 
     override fun get(): Set<AvailabilityDomain> {
-        client.setRegion(Region.US_PHOENIX_1)
-        val availabilityDomainsRequest = ListAvailabilityDomainsRequest.builder()
-                .compartmentId(compartment.id)
-                .build()
-        val availabilityDomainsResponse = client.listAvailabilityDomains(availabilityDomainsRequest)
-        return availabilityDomainsResponse.items.toSet()
+        client.setRegion(region)
+        val items = fullyList<AvailabilityDomain, ListAvailabilityDomainsRequest>({ page ->
+            ListAvailabilityDomainsRequest.builder()
+                    .compartmentId(compartment.id)
+                    .build()
+        }, { r: ListAvailabilityDomainsRequest ->
+            val response = client.listAvailabilityDomains(r)
+            Pair(response.opcNextPage, response.items)
+
+        })
+        return items.toSet()
     }
 }
+
 
 class Compartment: Resource {
     var id: String = ""

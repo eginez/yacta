@@ -76,6 +76,7 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     lateinit var availabilityDomain: AvailabilityDomain
     var cidrBlock: String = ""
     lateinit var compartment: Compartment
+    var name: String? = null
     var vcnId: String = ""
     var prohibitPubicIp: Boolean = false
     var routeTableId: String = ""
@@ -95,12 +96,14 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     }
 
     private fun toCreateSubnetDetails(): CreateSubnetDetails? {
-        return CreateSubnetDetails.builder()
+        var builder = CreateSubnetDetails.builder()
                 .availabilityDomain(availabilityDomain.name)
                 .cidrBlock(cidrBlock)
                 .compartmentId(compartment.id)
                 .vcnId(vcnId)
-                .build()
+        name?.let {builder.displayName(it)}
+
+        return builder.build()
     }
 
     override fun destroy() {
@@ -136,8 +139,8 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
 
     var subnetId: String = ""
     var publicIp: Boolean = false
-    var name: String = ""
-    var hostname: String = ""
+    var name: String? = null
+    var hostname: String? = null
     var subnet: SubnetResource? = null
 
     override fun create() {
@@ -162,12 +165,13 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
     }
 
     fun toVnicDetails(): CreateVnicDetails {
-        return CreateVnicDetails.builder()
+        val builder = CreateVnicDetails.builder()
                 .subnetId(subnetId)
                 .assignPublicIp(publicIp)
-                .displayName(name)
-                .hostnameLabel(hostname)
-                .build()
+
+        hostname?.let { builder.hostnameLabel(it) }
+        name?.let {builder.displayName(it)}
+        return builder.build()
     }
 
     fun subnet(fn: SubnetResource.() -> Unit): SubnetResource {
