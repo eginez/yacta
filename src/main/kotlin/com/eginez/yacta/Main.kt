@@ -14,9 +14,7 @@ fun main(args: Array<String>) {
     val oci = Oci()
     oci.region = oci.DEFAULT_REGION
 
-    val homeCompartment = compartment {
-        id = COMPARTMET_ID
-    }
+    val homeCompartment = compartment { id = COMPARTMET_ID }
 
     val vcnOne = oci.vcn {
         displayName = "VcnFromDSL"

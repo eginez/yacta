@@ -2,14 +2,9 @@ package com.eginez.yacta.resources.oci
 
 import com.eginez.yacta.resources.Resource
 import com.oracle.bmc.core.VirtualNetworkClient
-import com.oracle.bmc.core.model.CreateSubnetDetails
-import com.oracle.bmc.core.model.CreateVcnDetails
-import com.oracle.bmc.core.model.CreateVnicDetails
-import com.oracle.bmc.core.model.Vcn
-import com.oracle.bmc.core.requests.CreateSubnetRequest
-import com.oracle.bmc.core.requests.CreateVcnRequest
-import com.oracle.bmc.core.requests.DeleteVcnRequest
-import com.oracle.bmc.core.requests.GetVcnRequest
+import com.oracle.bmc.core.model.*
+import com.oracle.bmc.core.requests.*
+import com.oracle.bmc.core.responses.CreateInternetGatewayResponse
 import com.oracle.bmc.identity.model.AvailabilityDomain
 
 class  VcnResource (val client: VirtualNetworkClient): Resource {
@@ -189,3 +184,83 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
+
+class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
+    val LOG by com.eginez.yacta.resources.logger()
+    var internetGateway: InternetGateway? = null
+    var displayName: String? = null
+    var enabled: Boolean? = null
+    lateinit var compartment: Compartment
+    lateinit var vcn: VcnResource
+
+    override fun id(): String {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun create() {
+        val builder = CreateInternetGatewayDetails.builder()
+        builder.compartmentId(compartment.id())
+                .vcnId(vcn.id())
+        displayName?.let {builder.displayName(it)}
+        enabled?.let { builder.isEnabled(enabled)}
+        val request = CreateInternetGatewayRequest.builder()
+                .createInternetGatewayDetails(builder.build())
+                .build()
+
+        internetGateway = client.createInternetGateway(request).internetGateway
+        LOG.info("Created: ${this}")
+    }
+
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun dependencies(): List<Resource> {
+        return emptyList()
+    }
+
+    override fun toString(): String {
+        return "InternetGatewayResource(internetGateway=$internetGateway, displayName=$displayName, enabled=$enabled, compartment=$compartment, vcn=$vcn)"
+    }
+
+}
+
+class RouteTable(val client: VirtualNetworkClient): Resource {
+    val LOG by com.eginez.yacta.resources.logger()
+
+    override fun id(): String {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun create() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+    }
+
+    override fun dependencies(): List<Resource> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+}
+
+data class RouteRule (
+    val cidrBlock: String,
+    val internetGateway: InternetGateway
+)
