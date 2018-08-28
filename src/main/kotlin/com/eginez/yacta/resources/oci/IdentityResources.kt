@@ -6,6 +6,7 @@ import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.identity.IdentityClient
 import com.oracle.bmc.identity.model.AvailabilityDomain
+import com.oracle.bmc.identity.model.Compartment
 import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
 
 class AvailabilityDomains(val configuration: AuthenticationDetailsProvider, val region: Region): DataProvider<Set<AvailabilityDomain>> {
@@ -28,7 +29,7 @@ class AvailabilityDomains(val configuration: AuthenticationDetailsProvider, val 
 }
 
 
-class CompartmentResource: Resource {
+class CompartmentResource: Resource<Compartment> {
     var id: String = ""
 
     override fun create() {
@@ -39,7 +40,7 @@ class CompartmentResource: Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun get(): Resource {
+    override fun get(): Compartment {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -47,7 +48,7 @@ class CompartmentResource: Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun dependencies(): List<Resource> {
+    override fun dependencies(): List<Resource<*>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

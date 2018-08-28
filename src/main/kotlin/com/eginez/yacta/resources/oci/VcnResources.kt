@@ -8,7 +8,7 @@ import com.oracle.bmc.core.requests.*
 import com.oracle.bmc.identity.model.AvailabilityDomain
 import javax.print.attribute.standard.Destination
 
-class  VcnResource (val client: VirtualNetworkClient): Resource {
+class  VcnResource (val client: VirtualNetworkClient): Resource<Vcn> {
 
     val LOG by com.eginez.yacta.resources.logger()
     var displayName: String = ""
@@ -70,11 +70,11 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
         return id.orEmpty()
     }
 
-    override fun dependencies(): List<Resource> {
+    override fun dependencies(): List<Resource<*>> {
         return emptyList()
     }
 
-    override fun get(): Resource {
+    override fun get(): Vcn {
         TODO("not implemented")
     }
 
@@ -88,7 +88,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
 
 }
 
-class  SubnetResource (val client: VirtualNetworkClient): Resource {
+class  SubnetResource (val client: VirtualNetworkClient): Resource<Subnet> {
 
     var vcn: VcnResource = VcnResource(client)
     lateinit var availabilityDomain: AvailabilityDomain
@@ -140,11 +140,11 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
         return v
     }
 
-    override fun dependencies(): List<Resource> {
-        return listOf(vcn as Resource)
+    override fun dependencies(): List<Resource<*>> {
+        return listOf(vcn as Resource<*>)
     }
 
-    override fun get(): Resource {
+    override fun get(): Subnet {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -153,7 +153,7 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     }
 }
 
-class  VnicResource (val client: VirtualNetworkClient): Resource {
+class  VnicResource (val client: VirtualNetworkClient): Resource<Vnic> {
 
     var subnetId: String = ""
     var publicIp: Boolean = false
@@ -178,8 +178,8 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun dependencies(): List<Resource> {
-        return listOf(subnet as Resource)
+    override fun dependencies(): List<Resource<*>> {
+        return listOf(subnet as Resource<*>)
     }
 
     fun toVnicDetails(): CreateVnicDetails {
@@ -199,7 +199,7 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
         return v
     }
 
-    override fun get(): Resource {
+    override fun get(): Vnic {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -208,7 +208,7 @@ class  VnicResource (val client: VirtualNetworkClient): Resource {
     }
 }
 
-class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
+class InternetGatewayResource(val client: VirtualNetworkClient): Resource<InternetGateway> {
     val LOG by com.eginez.yacta.resources.logger()
     var internetGateway: InternetGateway? = null
     var displayName: String? = null
@@ -241,7 +241,7 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun get(): Resource {
+    override fun get(): InternetGateway {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -249,8 +249,8 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun dependencies(): List<Resource> {
-        return listOf(vcn as Resource)
+    override fun dependencies(): List<Resource<*>> {
+        return listOf(vcn as Resource<*>)
     }
 
     override fun toString(): String {
@@ -260,7 +260,7 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
 
 
 
-class RouteTableResource(val client: VirtualNetworkClient): Resource {
+class RouteTableResource(val client: VirtualNetworkClient): Resource<RouteTable> {
     val LOG by com.eginez.yacta.resources.logger()
     var rules: MutableList<RouteRuleResource> = mutableListOf()
     var id: String? = null
@@ -279,7 +279,7 @@ class RouteTableResource(val client: VirtualNetworkClient): Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun get(): Resource {
+    override fun get(): RouteTable {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -295,8 +295,8 @@ class RouteTableResource(val client: VirtualNetworkClient): Resource {
 
     }
 
-    override fun dependencies(): List<Resource> {
-        return listOf(vcn as Resource)
+    override fun dependencies(): List<Resource<*>> {
+        return listOf(vcn as Resource<*>)
     }
 
     fun rule(destination: String, gateway: InternetGatewayResource) {
@@ -314,7 +314,7 @@ class RouteTableResource(val client: VirtualNetworkClient): Resource {
 
 
 
-class RouteRuleResource: Resource {
+class RouteRuleResource: Resource<RouteRule> {
     var cidrBlock: String = ""
     var destination: String = ""
     var destinationType: RouteRule.DestinationType? = null
@@ -343,7 +343,7 @@ class RouteRuleResource: Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun get(): Resource {
+    override fun get(): RouteRule {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -351,8 +351,8 @@ class RouteRuleResource: Resource {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun dependencies(): List<Resource> {
-        val deps = mutableListOf<Resource>()
+    override fun dependencies(): List<Resource<*>> {
+        val deps = mutableListOf<Resource<*>>()
         ig?.let { deps.add(it) }
         return deps
     }

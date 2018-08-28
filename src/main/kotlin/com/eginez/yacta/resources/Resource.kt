@@ -4,7 +4,7 @@ import java.util.logging.Logger
 import kotlin.reflect.KProperty
 
 
-interface Resource {
+interface Resource<T> {
     @Throws(Exception::class)
     fun id(): String
 
@@ -18,15 +18,22 @@ interface Resource {
     fun destroy()
 
     @Throws(Exception::class)
-    fun get(): Resource
+    fun get(): T
 
     @Throws(Exception::class)
     fun update()
 
     @Throws(Exception::class)
-    fun dependencies(): List<Resource>
+    fun dependencies(): List<*>
 
 }
+
+
+// interface StatefulResource
+// interface SharedResource
+
+
+
 
 class LoggerDelegate {
 
@@ -38,5 +45,7 @@ class LoggerDelegate {
     }
 
 }
+
+//
 
 fun logger() = LoggerDelegate()

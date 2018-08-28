@@ -8,11 +8,11 @@ class ComputeResourcesTest {
     @Test
     fun createInstance() {
 
-        val COMPARTMET_ID = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
+        val compartmendId = System.getenv("COMPARTMENT_ID")
         val oci = Oci(region = Region.US_PHOENIX_1,
-                compartmentId = COMPARTMET_ID,
+                compartmentId = compartmendId,
                 configFilePath = "~/.oraclebmc/config")
-        val homeCompartment = compartment { id = COMPARTMET_ID }
+        val homeCompartment = compartment { id = compartmendId }
 
         val availDomains = oci.availabilityDomains()
         val images = oci.computeImages(homeCompartment)

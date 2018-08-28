@@ -18,7 +18,7 @@ import com.oracle.bmc.core.requests.ListImagesRequest
 import com.oracle.bmc.core.requests.ListShapesRequest
 import com.oracle.bmc.identity.model.AvailabilityDomain
 
-class InstanceResource (private val provider: ConfigFileAuthenticationDetailsProvider, val region: Region?): Resource {
+class InstanceResource (private val provider: ConfigFileAuthenticationDetailsProvider, val region: Region?): Resource<Instance> {
 
     val LOG by logger()
     lateinit var availabilityDomain: AvailabilityDomain
@@ -80,11 +80,11 @@ class InstanceResource (private val provider: ConfigFileAuthenticationDetailsPro
         return id.orEmpty()
     }
 
-    override fun dependencies(): List<Resource> {
-        return listOf(vnic as Resource)
+    override fun dependencies(): List<Resource<*>> {
+        return listOf(vnic as Resource<VnicResource>)
     }
 
-    override fun get(): Resource {
+    override fun get(): Instance {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

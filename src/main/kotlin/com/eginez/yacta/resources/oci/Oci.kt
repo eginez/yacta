@@ -13,7 +13,7 @@ import com.oracle.bmc.objectstorage.ObjectStorageClient
 annotation class ResourceMarker
 
 
-val executionGraph : MutableList<Resource> = mutableListOf()
+val executionGraph : MutableList<Resource<*>> = mutableListOf()
 
 
 @ResourceMarker
@@ -53,7 +53,7 @@ class Oci (val region: Region,
         return v
     }
 
-    fun instance(fn: InstanceResource.() -> Unit): Resource {
+    fun instance(fn: InstanceResource.() -> Unit): InstanceResource {
         val v = InstanceResource(provider, region)
         v.apply(fn)
         return v
