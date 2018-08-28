@@ -15,7 +15,7 @@ import javax.script.ScriptEngineManager
 class Yacta
 
 
-@Command(name="create", description = ["create the infrastructure comprising the name dfile"])
+@Command(name="create", description = ["evaluates and creates the infrastructure specified in the named file"])
 class YactaCreate : Runnable {
     private val scriptEngine =
             ScriptEngineManager().getEngineByExtension("kts") as KotlinJsr223JvmLocalScriptEngine
