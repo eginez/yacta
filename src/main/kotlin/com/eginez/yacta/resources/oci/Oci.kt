@@ -49,12 +49,15 @@ class Oci (val region: Region,
         val client = VirtualNetworkClient(provider)
         client.setRegion(region)
         val v = VcnResource(client)
+        v.compartment = compartment
         v.apply(fn)
         return v
     }
 
+
     fun instance(fn: InstanceResource.() -> Unit): InstanceResource {
         val v = InstanceResource(provider, region)
+        v.compartment = compartment
         v.apply(fn)
         return v
     }
@@ -63,6 +66,7 @@ class Oci (val region: Region,
         val client = VirtualNetworkClient(provider)
         client.setRegion(region)
         val v = InternetGatewayResource(client)
+        v.compartment = compartment
         v.apply(fn)
         return v
     }

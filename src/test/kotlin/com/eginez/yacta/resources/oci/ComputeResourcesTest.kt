@@ -24,7 +24,6 @@ class ComputeResourcesTest {
         val instance = oci.instance {
             sshPublicKey = System.getenv("SSH_PUBLIC_KEY")
             availabilityDomain = firstAvailabilityDomain
-            compartment = homeCompartment
             displayName = "DSLInstance"
 
             image = images.find {
@@ -36,14 +35,12 @@ class ComputeResourcesTest {
 
             val vnetwork = oci.vcn {
                 displayName = "VcnFromDSL"
-                compartment = homeCompartment
                 cidrBlock = "10.0.0.0/16"
             }
 
             val ig = oci.internetGateway {
                 displayName = "DSLInternetGateway"
                 enabled = true
-                compartment = homeCompartment
                 vcn = vnetwork
             }
 
