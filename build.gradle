@@ -28,6 +28,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-script-runtime:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-script-util:$kotlin_version"
+    compile 'info.picocli:picocli:3.5.2'
     compile fileTree(dir:'libs', include: '*.jar')
 
     //compile "com.oracle.oci.sdk:oci-java-sdk-full:1.2.15"
