@@ -1,4 +1,4 @@
-package com.eginez.yacta.resources.oci
+package com.eginez.yacta.plugin.oci
 
 fun <T,R> fullyList(createRequestFn:(String?) -> R, listFn:(R) ->Pair<String?,List<T>> ): List<T> {
     val allItems = mutableListOf<T>()

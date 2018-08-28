@@ -1,4 +1,4 @@
-package com.eginez.yacta.resources.oci
+package com.eginez.yacta.plugin.oci
 
 import com.oracle.bmc.Region
 import org.junit.Test

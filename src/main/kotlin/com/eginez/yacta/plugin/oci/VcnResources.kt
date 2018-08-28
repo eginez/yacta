@@ -1,16 +1,15 @@
-package com.eginez.yacta.resources.oci
+package com.eginez.yacta.plugin.oci
 
-import com.eginez.yacta.resources.Resource
-import com.oracle.bmc.auth.AuthenticationDetailsProvider
+import com.eginez.yacta.data.Resource
+import com.eginez.yacta.data.logger
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.*
 import com.oracle.bmc.core.requests.*
 import com.oracle.bmc.identity.model.AvailabilityDomain
-import javax.print.attribute.standard.Destination
 
 class  VcnResource (val client: VirtualNetworkClient): Resource<Vcn> {
 
-    val LOG by com.eginez.yacta.resources.logger()
+    val LOG by logger()
     var displayName: String = ""
     lateinit var compartment: CompartmentResource
     var cidrBlock: String = ""
@@ -209,7 +208,7 @@ class  VnicResource (val client: VirtualNetworkClient): Resource<Vnic> {
 }
 
 class InternetGatewayResource(val client: VirtualNetworkClient): Resource<InternetGateway> {
-    val LOG by com.eginez.yacta.resources.logger()
+    val LOG by logger()
     var internetGateway: InternetGateway? = null
     var displayName: String? = null
     var enabled: Boolean? = null
@@ -261,7 +260,7 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource<Intern
 
 
 class RouteTableResource(val client: VirtualNetworkClient): Resource<RouteTable> {
-    val LOG by com.eginez.yacta.resources.logger()
+    val LOG by logger()
     var rules: MutableList<RouteRuleResource> = mutableListOf()
     var id: String? = null
     var displayName: String? = null

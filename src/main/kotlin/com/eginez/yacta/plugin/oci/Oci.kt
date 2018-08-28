@@ -1,6 +1,6 @@
-package com.eginez.yacta.resources.oci
+package com.eginez.yacta.plugin.oci
 
-import com.eginez.yacta.resources.Resource
+import com.eginez.yacta.data.Resource
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
 import com.oracle.bmc.core.VirtualNetworkClient
@@ -27,7 +27,7 @@ class Oci (val region: Region,
 
     companion object { val DEFAULT_REGION = Region.US_PHOENIX_1 }
     init {
-        compartment = com.eginez.yacta.resources.oci.compartment { id = compartmentId }
+        compartment = compartment { id = compartmentId }
     }
 
 

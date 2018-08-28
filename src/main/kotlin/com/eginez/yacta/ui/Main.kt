@@ -1,5 +1,7 @@
-package com.eginez.yacta
+package com.eginez.yacta.ui
 
+import com.eginez.yacta.plugin.oci.Oci
+import com.eginez.yacta.plugin.oci.compartment
 import com.eginez.yacta.resources.oci.*
 import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngine
 import javax.script.ScriptEngineManager

@@ -1,7 +1,7 @@
-package com.eginez.yacta.resources.oci
+package com.eginez.yacta.plugin.oci
 
 
-import com.eginez.yacta.resources.Resource
+import com.eginez.yacta.data.Resource
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
 import com.oracle.bmc.objectstorage.requests.*
 import com.oracle.bmc.model.BmcException

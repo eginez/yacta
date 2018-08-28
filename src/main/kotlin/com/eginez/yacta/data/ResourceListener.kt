@@ -1,4 +1,4 @@
-package com.eginez.yacta.resources
+package com.eginez.yacta.data
 
 interface ResourceListener {
     fun preCreate()

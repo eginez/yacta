@@ -1,8 +1,8 @@
-package com.eginez.yacta.resources.oci
+package com.eginez.yacta.plugin.oci
 
-import com.eginez.yacta.resources.DataProvider
-import com.eginez.yacta.resources.Resource
-import com.eginez.yacta.resources.logger
+import com.eginez.yacta.data.DataProvider
+import com.eginez.yacta.data.Resource
+import com.eginez.yacta.data.logger
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
@@ -132,12 +132,12 @@ class ComputeShapes(configuration: AuthenticationDetailsProvider, private val re
 
     override fun get(): Set<Shape> {
         client.setRegion(region)
-        val shapes = fullyList<Shape, ListShapesRequest>({page ->
+        val shapes = fullyList<Shape, ListShapesRequest>({ page ->
             ListShapesRequest.builder()
                     .compartmentId(compartment.id)
                     .page(page)
                     .build()
-        }, {r: ListShapesRequest ->
+        }, { r: ListShapesRequest ->
             val res = client.listShapes(r)
             Pair(res.opcNextPage, res.items)
         })

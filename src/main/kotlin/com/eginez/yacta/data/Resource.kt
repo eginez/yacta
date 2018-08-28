@@ -1,4 +1,4 @@
-package com.eginez.yacta.resources
+package com.eginez.yacta.data
 
 import java.util.logging.Logger
 import kotlin.reflect.KProperty

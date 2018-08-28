@@ -1,7 +1,7 @@
-package com.eginez.yacta.resources.oci
+package com.eginez.yacta.plugin.oci
 
-import com.eginez.yacta.resources.DataProvider
-import com.eginez.yacta.resources.Resource
+import com.eginez.yacta.data.DataProvider
+import com.eginez.yacta.data.Resource
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.identity.IdentityClient
@@ -59,8 +59,8 @@ class CompartmentResource: Resource<Compartment> {
 
 
 @ResourceMarker
-fun compartment(fn: CompartmentResource.() -> Unit): CompartmentResource{
-    val c = com.eginez.yacta.resources.oci.CompartmentResource()
+fun compartment(fn: CompartmentResource.() -> Unit): CompartmentResource {
+    val c = CompartmentResource()
     c.apply(fn)
     return c
 }
