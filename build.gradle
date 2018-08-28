@@ -19,10 +19,6 @@ mainClassName = 'com.eginez.yacta.ui.MainCli'
 
 repositories {
     mavenCentral()
-    //maven {
-    //   //url 'http://artifactory.aka.lgl.grungy.us/libs-release'
-    //    url 'http://artifactory.aka.lgl.grungy.us/libs-snapshot'
-    //}
 }
 
 dependencies {
