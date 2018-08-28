@@ -12,10 +12,7 @@ import com.oracle.bmc.core.model.Image
 import com.oracle.bmc.core.model.Instance
 import com.oracle.bmc.core.model.LaunchInstanceDetails
 import com.oracle.bmc.core.model.Shape
-import com.oracle.bmc.core.requests.GetInstanceRequest
-import com.oracle.bmc.core.requests.LaunchInstanceRequest
-import com.oracle.bmc.core.requests.ListImagesRequest
-import com.oracle.bmc.core.requests.ListShapesRequest
+import com.oracle.bmc.core.requests.*
 import com.oracle.bmc.identity.model.AvailabilityDomain
 
 class InstanceResource (private val provider: ConfigFileAuthenticationDetailsProvider, val region: Region?): Resource<Instance> {
@@ -69,8 +66,28 @@ class InstanceResource (private val provider: ConfigFileAuthenticationDetailsPro
                 .execute()
         id = instanceResponse.instance.id
 
-        LOG.info("Instance: $this created")
+        LOG.info("""Instance created: ${publicIp()}""")
     }
+
+    fun publicIp(): String {
+        val listVnicAttachments = client.listVnicAttachments(ListVnicAttachmentsRequest.builder()
+                .compartmentId(compartment.id())
+                .instanceId(id)
+                .build())
+
+        if (listVnicAttachments.items.size == 0) {
+            return ""
+        }
+
+        val first = listVnicAttachments.items.first()
+        val vcnClient = VirtualNetworkClient(provider)
+        vcnClient.setRegion(region)
+        val vnicRes = vcnClient.getVnic(GetVnicRequest.builder()
+                .vnicId(first.vnicId)
+                .build())
+        return vnicRes.vnic.publicIp
+    }
+
 
     override fun destroy() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -101,6 +118,7 @@ class InstanceResource (private val provider: ConfigFileAuthenticationDetailsPro
     }
 
     override fun toString(): String {
+
         return "InstanceResource(provider=$provider, region=$region, availabilityDomain=$availabilityDomain, compartment=$compartment, image=$image, shape=$shape, vnic=$vnic, displayName=$displayName, hostLabel=$hostLabel, ipxeScript=$ipxeScript, metadata=$metadata, extendedMetadata=$extendedMetadata, sshPublicKey=$sshPublicKey, id=$id, client=$client)"
     }
 

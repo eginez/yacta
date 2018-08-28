@@ -1,11 +1,13 @@
 package com.eginez.yacta.plugin.oci
 
 import com.oracle.bmc.Region
+import org.junit.Ignore
 import org.junit.Test
 
 class ComputeResourcesTest {
 
     @Test
+    @Ignore
     fun createInstance() {
 
         val compartmendId = System.getenv("COMPARTMENT_ID")

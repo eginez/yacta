@@ -1,15 +1,18 @@
 package sampleScripts
 
+import com.eginez.yacta.data.asFile
 import com.eginez.yacta.plugin.oci.Oci
 import com.eginez.yacta.plugin.oci.compartment
 import com.oracle.bmc.Region
 
-//val compartmendId = System.getenv("COMPARTMENT_ID")
-val compartmendId = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
+val compartmentId = System.getenv("COMPARTMENT_ID")
+check(compartmentId != null && compartmentId.isNotBlank(),
+        {"COMPARTMENT_ID needs to be set as part of environment"})
+
 val oci = Oci(region = Region.US_PHOENIX_1,
-        compartmentId = compartmendId,
+        compartmentId = compartmentId,
         configFilePath = "~/.oraclebmc/config")
-val homeCompartment = compartment { id = compartmendId }
+val homeCompartment = compartment { id = compartmentId }
 
 val availDomains = oci.availabilityDomains()
 val images = oci.computeImages(homeCompartment)
@@ -19,7 +22,7 @@ val shapes = oci.computeShapes(homeCompartment)
 val firstAvailabilityDomain = availDomains.first()
 
 oci.instance {
-    sshPublicKey = System.getenv("SSH_PUBLIC_KEY")
+    sshPublicKey = "~/.ssh/id_rsa.pub".asFile().readText()
     availabilityDomain = firstAvailabilityDomain
     displayName = "DSLInstance"
 

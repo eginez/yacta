@@ -11,7 +11,6 @@ class UtilsTest {
 
     @Test
     fun TestFullyList() {
-
         val configuration = ConfigFileAuthenticationDetailsProvider("~/.oci/config", "DEFAULT")
         val client = ComputeClient(configuration)
         client.setRegion(Region.US_PHOENIX_1)
