@@ -2,14 +2,17 @@ package com.eginez.yacta.resources.oci
 
 import com.eginez.yacta.resources.DataProvider
 import com.eginez.yacta.resources.Resource
+import com.eginez.yacta.resources.logger
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.core.ComputeClient
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.Image
+import com.oracle.bmc.core.model.Instance
 import com.oracle.bmc.core.model.LaunchInstanceDetails
 import com.oracle.bmc.core.model.Shape
+import com.oracle.bmc.core.requests.GetInstanceRequest
 import com.oracle.bmc.core.requests.LaunchInstanceRequest
 import com.oracle.bmc.core.requests.ListImagesRequest
 import com.oracle.bmc.core.requests.ListShapesRequest
@@ -17,8 +20,9 @@ import com.oracle.bmc.identity.model.AvailabilityDomain
 
 class InstanceResource (private val provider: ConfigFileAuthenticationDetailsProvider, val region: Region?): Resource {
 
+    val LOG by logger()
     lateinit var availabilityDomain: AvailabilityDomain
-    lateinit var compartment: Compartment
+    lateinit var compartment: CompartmentResource
     lateinit var image: Image
     lateinit var shape: Shape
     var vnic: VnicResource? = null
@@ -58,6 +62,14 @@ class InstanceResource (private val provider: ConfigFileAuthenticationDetailsPro
                 .build()
         val resp = client.launchInstance(req)
         id = resp.instance.id
+
+        LOG.info("Creating instance: $this")
+        val instanceResponse = client.waiters.forInstance(GetInstanceRequest.builder()
+                .instanceId(id).build(), Instance.LifecycleState.Running)
+                .execute()
+        id = instanceResponse.instance.id
+
+        LOG.info("Instance: $this created")
     }
 
     override fun destroy() {
@@ -88,12 +100,15 @@ class InstanceResource (private val provider: ConfigFileAuthenticationDetailsPro
         return v
     }
 
+    override fun toString(): String {
+        return "InstanceResource(provider=$provider, region=$region, availabilityDomain=$availabilityDomain, compartment=$compartment, image=$image, shape=$shape, vnic=$vnic, displayName=$displayName, hostLabel=$hostLabel, ipxeScript=$ipxeScript, metadata=$metadata, extendedMetadata=$extendedMetadata, sshPublicKey=$sshPublicKey, id=$id, client=$client)"
+    }
+
 }
 
-class ComputeImages(configuration: AuthenticationDetailsProvider ): DataProvider<Set<Image>> {
-    var region = Region.US_PHOENIX_1
+class ComputeImages(configuration: AuthenticationDetailsProvider, private val region: Region ): DataProvider<Set<Image>> {
     private val client = ComputeClient(configuration)
-    lateinit var compartment: Compartment
+    lateinit var compartment: CompartmentResource
 
     override fun get(): Set<Image> {
         client.setRegion(region)
@@ -111,9 +126,8 @@ class ComputeImages(configuration: AuthenticationDetailsProvider ): DataProvider
 
 }
 
-class ComputeShapes(configuration: AuthenticationDetailsProvider): DataProvider<Set<Shape>> {
-    lateinit var compartment: Compartment
-    var region = Region.US_PHOENIX_1
+class ComputeShapes(configuration: AuthenticationDetailsProvider, private val region: Region): DataProvider<Set<Shape>> {
+    lateinit var compartment: CompartmentResource
     private val client = ComputeClient(configuration)
 
     override fun get(): Set<Shape> {

@@ -1,6 +1,6 @@
-package com.eginez.yacta
+package com.eginez.yacta.resources.oci
 
-import com.eginez.yacta.resources.oci.Oci
+import com.oracle.bmc.Region
 import  com.oracle.bmc.objectstorage.model.CreateBucketDetails.PublicAccessType.ObjectRead
 import org.junit.Ignore
 import org.junit.Test
@@ -11,13 +11,13 @@ class ObjectStorageResourceTest {
     @Test
     @Ignore
     fun testCreateBucket() {
-        val c = Oci()
+        val cid = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
+        val c = Oci(Region.US_PHOENIX_1, cid)
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
         c.objectStorage {
-            region = DEFAULT_REGION
             bucket {
                 name = "EGZBucketOne"
                 compartmentId = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
@@ -32,13 +32,13 @@ class ObjectStorageResourceTest {
     @Test
     @Ignore
     fun testCreateMultiple() {
-        val c = Oci()
+        val cid = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
+        val c = Oci(Region.US_PHOENIX_1, cid)
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
         c.objectStorage {
-            region = DEFAULT_REGION
             (1..5).forEach { num ->
                 bucket {
                     name = "NewDSLBucket$num"
@@ -55,13 +55,13 @@ class ObjectStorageResourceTest {
     @Test
     @Ignore
     fun testBucketAndObject() {
-        val c = Oci()
+        val cid = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
+        val c = Oci(Region.US_PHOENIX_1, cid)
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
         c.objectStorage {
-            region = DEFAULT_REGION
             bucket {
                 name = "DSLBucketOneFile"
                 compartmentId = "ocid1.compartment.oc1..aaaaaaaa6amlftmhyeeeil54oybmd5rizcruqirk73lcm3n45a5sib5ucbxa"
@@ -85,13 +85,13 @@ class ObjectStorageResourceTest {
     @Test
     @Ignore
     fun testBucketAndMultipleObject() {
-        val c = Oci()
+        val cid = "ocid1.compartment.oc1..aaaaaaaaptqakzgdmjxr4oq6f6v3vtoc5t3j44frmjf6snlm5zgfwo6lwkua"
+        val c = Oci(Region.US_PHOENIX_1, cid)
 
         ////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////
 
         c.objectStorage {
-            region = DEFAULT_REGION
             bucket {
                 name = "DSLBucketFiles"
                 compartmentId = "ocid1.compartment.oc1..aaaaaaaa6amlftmhyeeeil54oybmd5rizcruqirk73lcm3n45a5sib5ucbxa"

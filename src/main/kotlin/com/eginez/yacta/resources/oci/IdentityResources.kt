@@ -8,12 +8,11 @@ import com.oracle.bmc.identity.IdentityClient
 import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
 
-class AvailabilityDomains(configuration: AuthenticationDetailsProvider): DataProvider<Set<AvailabilityDomain>> {
-    lateinit var compartment: Compartment
-    private val client = IdentityClient(configuration)
-    var region = Region.US_PHOENIX_1
+class AvailabilityDomains(val configuration: AuthenticationDetailsProvider, val region: Region): DataProvider<Set<AvailabilityDomain>> {
+    lateinit var compartment: CompartmentResource
 
     override fun get(): Set<AvailabilityDomain> {
+        val client = IdentityClient(configuration)
         client.setRegion(region)
         val items = fullyList<AvailabilityDomain, ListAvailabilityDomainsRequest>({ page ->
             ListAvailabilityDomainsRequest.builder()
@@ -29,7 +28,7 @@ class AvailabilityDomains(configuration: AuthenticationDetailsProvider): DataPro
 }
 
 
-class Compartment: Resource {
+class CompartmentResource: Resource {
     var id: String = ""
 
     override fun create() {
@@ -59,8 +58,8 @@ class Compartment: Resource {
 
 
 @ResourceMarker
-fun compartment(fn: Compartment.() -> Unit): Compartment{
-    val c = com.eginez.yacta.resources.oci.Compartment()
+fun compartment(fn: CompartmentResource.() -> Unit): CompartmentResource{
+    val c = com.eginez.yacta.resources.oci.CompartmentResource()
     c.apply(fn)
     return c
 }

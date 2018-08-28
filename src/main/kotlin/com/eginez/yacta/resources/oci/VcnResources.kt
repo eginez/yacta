@@ -1,22 +1,30 @@
 package com.eginez.yacta.resources.oci
 
 import com.eginez.yacta.resources.Resource
+import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.*
 import com.oracle.bmc.core.requests.*
-import com.oracle.bmc.core.responses.CreateInternetGatewayResponse
 import com.oracle.bmc.identity.model.AvailabilityDomain
+import javax.print.attribute.standard.Destination
 
 class  VcnResource (val client: VirtualNetworkClient): Resource {
 
+    val LOG by com.eginez.yacta.resources.logger()
     var displayName: String = ""
-    lateinit var compartment: Compartment
+    lateinit var compartment: CompartmentResource
     var cidrBlock: String = ""
     var dnsLabel: String? = null
     private var id: String? = null
 
-    override fun create() {
+    private var routeTableResource: RouteTableResource? = null
 
+    @Synchronized override fun create() {
+
+        if (id != null) {
+            LOG.info("vcn has been already created: $this")
+            return
+        }
         var details = CreateVcnDetails.builder()
                 .cidrBlock(cidrBlock)
                 .compartmentId(compartment.id)
@@ -31,8 +39,22 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
 
         id = client.createVcn(request).vcn.id
         val waiter = client.waiters.forVcn(GetVcnRequest.builder().vcnId(id).build(), Vcn.LifecycleState.Available)
-        waiter.execute()
+        val vcn = waiter.execute().vcn
         println("Created: " + this)
+
+        //TODO move all this to execution graph
+        routeTableResource?.let {
+            it.id = vcn.defaultRouteTableId
+            it.update()
+        }
+    }
+
+    fun routeTable(fn: RouteTableResource.() -> Unit): RouteTableResource {
+        routeTableResource = RouteTableResource(client)
+        routeTableResource!!.apply(fn)
+        return routeTableResource!!
+
+        //This should add a task to the execution graph
     }
 
     override fun destroy() {
@@ -53,7 +75,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
     }
 
     override fun get(): Resource {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented")
     }
 
     override fun update() {
@@ -63,6 +85,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource {
     override fun toString(): String {
         return "VcnResource(displayName='$displayName', compartmentId='${compartment.id}', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
     }
+
 }
 
 class  SubnetResource (val client: VirtualNetworkClient): Resource {
@@ -70,7 +93,7 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource {
     var vcn: VcnResource = VcnResource(client)
     lateinit var availabilityDomain: AvailabilityDomain
     var cidrBlock: String = ""
-    lateinit var compartment: Compartment
+    lateinit var compartment: CompartmentResource
     var name: String? = null
     var vcnId: String = ""
     var prohibitPubicIp: Boolean = false
@@ -190,14 +213,16 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
     var internetGateway: InternetGateway? = null
     var displayName: String? = null
     var enabled: Boolean? = null
-    lateinit var compartment: Compartment
+    lateinit var compartment: CompartmentResource
     lateinit var vcn: VcnResource
+    var id: String = ""
 
     override fun id(): String {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return id
     }
 
     override fun create() {
+        dependencies().forEach { it.create()}
         val builder = CreateInternetGatewayDetails.builder()
         builder.compartmentId(compartment.id())
                 .vcnId(vcn.id())
@@ -208,6 +233,7 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
                 .build()
 
         internetGateway = client.createInternetGateway(request).internetGateway
+        id = internetGateway?.id!!
         LOG.info("Created: ${this}")
     }
 
@@ -224,24 +250,29 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource {
     }
 
     override fun dependencies(): List<Resource> {
-        return emptyList()
+        return listOf(vcn as Resource)
     }
 
     override fun toString(): String {
         return "InternetGatewayResource(internetGateway=$internetGateway, displayName=$displayName, enabled=$enabled, compartment=$compartment, vcn=$vcn)"
     }
-
 }
 
-class RouteTable(val client: VirtualNetworkClient): Resource {
+
+
+class RouteTableResource(val client: VirtualNetworkClient): Resource {
     val LOG by com.eginez.yacta.resources.logger()
+    var rules: MutableList<RouteRuleResource> = mutableListOf()
+    var id: String? = null
+    var displayName: String? = null
+    var vcn: VcnResource? = null
+
 
     override fun id(): String {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun create() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun destroy() {
@@ -253,14 +284,82 @@ class RouteTable(val client: VirtualNetworkClient): Resource {
     }
 
     override fun update() {
+        val rlz = rules.map { it.create(); it.routeRule!! }
+        val request = UpdateRouteTableRequest.builder()
+                .updateRouteTableDetails(UpdateRouteTableDetails.builder()
+                        .routeRules(rlz).build())
+                .rtId(id)
+                .build()
+        client.updateRouteTable(request)
+        LOG.info("Created $this")
+
     }
 
     override fun dependencies(): List<Resource> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return listOf(vcn as Resource)
+    }
+
+    fun rule(destination: String, gateway: InternetGatewayResource) {
+        val rule = RouteRuleResource()
+        rule.ig = gateway
+        rule.destination = destination
+        rule.destinationType = RouteRule.DestinationType.CidrBlock
+        rules.add(rule)
+    }
+
+    override fun toString(): String {
+        return "RouteTableResource(rules=$rules, id=$id, displayName=$displayName, vcn=$vcn)"
     }
 }
 
-data class RouteRule (
-    val cidrBlock: String,
-    val internetGateway: InternetGateway
-)
+
+
+class RouteRuleResource: Resource {
+    var cidrBlock: String = ""
+    var destination: String = ""
+    var destinationType: RouteRule.DestinationType? = null
+    var networkEntityId: String? = null
+
+    var ig: InternetGatewayResource? = null
+
+    var routeRule: RouteRule? = null
+
+
+    override fun id(): String {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun create() {
+        dependencies().forEach { it.create() }
+
+        val builder = RouteRule.builder()
+                .destination(destination)
+                .networkEntityId(ig?.id)
+        destinationType?.let { builder.destinationType(destinationType) }
+        routeRule = builder.build()
+    }
+
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun get(): Resource {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun update() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun dependencies(): List<Resource> {
+        val deps = mutableListOf<Resource>()
+        ig?.let { deps.add(it) }
+        return deps
+    }
+
+    override fun toString(): String {
+        return super.toString()
+    }
+
+}
+

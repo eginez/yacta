@@ -4,6 +4,8 @@ import com.eginez.yacta.resources.Resource
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
 import com.oracle.bmc.core.VirtualNetworkClient
+import com.oracle.bmc.core.model.Image
+import com.oracle.bmc.core.model.Shape
 import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.objectstorage.ObjectStorageClient
 
@@ -15,13 +17,18 @@ val executionGraph : MutableList<Resource> = mutableListOf()
 
 
 @ResourceMarker
-class Oci {
+class Oci (val region: Region,
+           val compartmentId: String,
+           val configFilePath: String = "~/.oci/config",
+           profile: String = "DEFAULT") {
 
-    var profile = "DEFAULT"
-    var filePath = "~/.oci/config"
-    var provider = ConfigFileAuthenticationDetailsProvider(filePath, profile)
-    val DEFAULT_REGION = Region.US_PHOENIX_1
-    var region: Region? = null
+    var provider = ConfigFileAuthenticationDetailsProvider(configFilePath, profile)
+    private val compartment: CompartmentResource
+
+    companion object { val DEFAULT_REGION = Region.US_PHOENIX_1 }
+    init {
+        compartment = com.eginez.yacta.resources.oci.compartment { id = compartmentId }
+    }
 
 
     fun objectStorage(fn: Oci.() -> Unit) {
@@ -51,6 +58,36 @@ class Oci {
         v.apply(fn)
         return v
     }
+
+    fun internetGateway(fn: InternetGatewayResource.() -> Unit): InternetGatewayResource {
+        val client = VirtualNetworkClient(provider)
+        client.setRegion(region)
+        val v = InternetGatewayResource(client)
+        v.apply(fn)
+        return v
+    }
+
+
+
+
+    fun availabilityDomains(compartment: CompartmentResource? = null, region: Region = this.region): Set<AvailabilityDomain> {
+        val ads = AvailabilityDomains(provider, region)
+        ads.compartment = compartment ?: this.compartment
+        return ads.get()
+    }
+
+    fun computeImages(compartment: CompartmentResource, region: Region = this.region): Set<Image> {
+        val ads = ComputeImages(provider, region)
+        ads.compartment = compartment
+        return ads.get()
+    }
+
+    fun computeShapes(compartment: CompartmentResource, region: Region = this.region): Set<Shape> {
+        val ads = ComputeShapes(provider, region)
+        ads.compartment = compartment
+        return ads.get()
+    }
+
 }
 
 
