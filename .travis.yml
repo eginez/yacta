@@ -4,6 +4,5 @@ jdk:
     - oraclejdk8
 script:
     - ./gradlew --console=plain check
-
 notifications:
     email: false
