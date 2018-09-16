@@ -6,3 +6,4 @@ script:
     - ./gradlew --console=plain check
 notifications:
     email: false
+
