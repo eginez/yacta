@@ -222,6 +222,17 @@ class  VnicResource (val client: VirtualNetworkClient): Resource<Vnic> {
     }
 }
 
+fun InstanceResource.vnic(provider: AuthenticationDetailsProvider= this.configurationProvider,
+            region: Region = this.region,
+            compartment: CompartmentResource? = this.compartment,
+            fn: VnicResource.() -> Unit = {}): VnicResource {
+    val vcnClient = VirtualNetworkClient(provider)
+    vcnClient.setRegion(region)
+    val v = VnicResource(vcnClient)
+    v.apply(fn)
+    return v
+}
+
 class InternetGatewayResource(val client: VirtualNetworkClient): Resource<InternetGateway> {
     val LOG by logger()
     var internetGateway: InternetGateway? = null

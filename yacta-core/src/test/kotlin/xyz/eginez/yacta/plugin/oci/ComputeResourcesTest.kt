@@ -3,38 +3,30 @@ package xyz.eginez.yacta.plugin.oci
 import com.oracle.bmc.Region
 import org.junit.Ignore
 import org.junit.Test
+import java.nio.file.Paths
 
 class ComputeResourcesTest {
+    val configLocation = Paths.get("~/.oci", "config")
 
-    /*
     @Test
     @Ignore
     fun createInstance() {
 
-        val compartmendId = System.getenv("COMPARTMENT_ID")
+        val compartmentId = System.getenv("COMPARTMENT_ID")
         val oci = Oci(region = Region.US_PHOENIX_1,
-                compartmentId = compartmendId,
-                configFilePath = "~/.oraclebmc/config")
-        val homeCompartment = compartment { id = compartmendId }
-
-        val availDomains = oci.availabilityDomains()
-        val images = oci.computeImages(homeCompartment)
-        val shapes = oci.computeShapes(homeCompartment)
+                compartmentId = compartmentId,
+                configFilePath = configLocation.toString())
 
 
-        val firstAvailabilityDomain = availDomains.first()
-
+        val homeCompartment = oci.compartment
         val instance = oci.instance {
             sshPublicKey = System.getenv("SSH_PUBLIC_KEY")
-            availabilityDomain = firstAvailabilityDomain
+            availabilityDomain = availabilityDomains.first()
             displayName = "DSLInstance"
 
-            image = images.find {
-                it.displayName.contains("Canonical-Ubuntu", true)
-                        && !it.displayName.contains("GPU", true)
-            }!!
+            image = image(osName="Canonical Ubuntu", osVersion="xxx", gpu=false)
 
-            shape = shapes.find { it.shape.contains("VM.Standard1.2", true) }!!
+            shape = shape(name="Standard1.2", vm=true)
 
             val vnetwork = oci.vcn {
                 displayName = "VcnFromDSL"
@@ -55,7 +47,7 @@ class ComputeResourcesTest {
                 publicIp = true
                 subnet {
                     cidrBlock = "10.0.0.0/24"
-                    availabilityDomain = firstAvailabilityDomain
+                    availabilityDomain = availabilityDomains.first()
                     compartment = homeCompartment
                     name = "DSLSubnet"
                     vcn = vnetwork
@@ -63,6 +55,6 @@ class ComputeResourcesTest {
             }
         }
 
-        instance.create()
-    }*/
+        //instance.create()
+    }
 }

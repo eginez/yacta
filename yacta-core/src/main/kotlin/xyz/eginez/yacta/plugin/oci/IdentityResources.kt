@@ -9,13 +9,12 @@ import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.identity.model.Compartment
 import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
 
-class AvailabilityDomains(val configuration: AuthenticationDetailsProvider,
+class AvailabilityDomains(configurationProvider: AuthenticationDetailsProvider,
                           val region: Region,
                           val compartment: CompartmentResource): DataProvider<Set<AvailabilityDomain>> {
+    private val client = createClient<IdentityClient>(configurationProvider, region, IdentityClient.builder())
 
     override fun get(): Set<AvailabilityDomain> {
-        val client = IdentityClient(configuration)
-        client.setRegion(region)
         val items = fullyList<AvailabilityDomain, ListAvailabilityDomainsRequest>({ page ->
             ListAvailabilityDomainsRequest.builder()
                     .compartmentId(compartment.id)
@@ -28,6 +27,7 @@ class AvailabilityDomains(val configuration: AuthenticationDetailsProvider,
         return items.toSet()
     }
 }
+
 val <T> OciBaseResource<T>.availabilityDomains: Set<AvailabilityDomain>
     get() = AvailabilityDomains(configurationProvider, region, compartment!!).get()
 

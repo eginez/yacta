@@ -10,6 +10,7 @@ import com.oracle.bmc.core.model.Image
 import com.oracle.bmc.core.model.Shape
 import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.objectstorage.ObjectStorageClient
+import java.nio.file.Paths
 
 @DslMarker
 annotation class ResourceMarker
@@ -72,7 +73,7 @@ class LoggerListener(private val resource: OciBaseResource<*>): ResourceStateCha
 @ResourceMarker
 class Oci (val region: Region,
            val compartmentId: String,
-           val configFilePath: String = "~/.oci/config",
+           val configFilePath: String = Paths.get("~/.oci", "config").toString(),
            profile: String = "DEFAULT") {
 
     var provider = ConfigFileAuthenticationDetailsProvider(configFilePath, profile)
@@ -98,8 +99,7 @@ class Oci (val region: Region,
 
 
     fun instance(fn: InstanceResource.() -> Unit): InstanceResource {
-        val v = InstanceResource(provider, region)
-        v.compartment = compartment
+        val v = InstanceResource(provider, region, compartment)
         v.apply(fn)
         return v
     }
