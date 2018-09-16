@@ -6,6 +6,7 @@ import org.junit.Test
 
 class ComputeResourcesTest {
 
+    /*
     @Test
     @Ignore
     fun createInstance() {
@@ -63,5 +64,5 @@ class ComputeResourcesTest {
         }
 
         instance.create()
-    }
+    }*/
 }

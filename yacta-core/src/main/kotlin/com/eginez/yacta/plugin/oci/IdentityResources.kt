@@ -9,8 +9,9 @@ import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.identity.model.Compartment
 import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
 
-class AvailabilityDomains(val configuration: AuthenticationDetailsProvider, val region: Region): DataProvider<Set<AvailabilityDomain>> {
-    lateinit var compartment: CompartmentResource
+class AvailabilityDomains(val configuration: AuthenticationDetailsProvider,
+                          val region: Region,
+                          val compartment: CompartmentResource): DataProvider<Set<AvailabilityDomain>> {
 
     override fun get(): Set<AvailabilityDomain> {
         val client = IdentityClient(configuration)
@@ -27,11 +28,12 @@ class AvailabilityDomains(val configuration: AuthenticationDetailsProvider, val 
         return items.toSet()
     }
 }
+val <T> OciBaseResource<T>.availabilityDomains: Set<AvailabilityDomain>
+    get() = AvailabilityDomains(configurationProvider, region, compartment!!).get()
 
 
-class CompartmentResource: Resource<Compartment> {
-    var id: String = ""
 
+class CompartmentResource(val id: String=""): Resource<Compartment> {
     override fun create() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

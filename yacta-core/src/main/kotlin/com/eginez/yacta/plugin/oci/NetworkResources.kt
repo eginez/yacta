@@ -2,31 +2,36 @@ package com.eginez.yacta.plugin.oci
 
 import com.eginez.yacta.data.Resource
 import com.eginez.yacta.data.logger
+import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.*
 import com.oracle.bmc.core.requests.*
 import com.oracle.bmc.identity.model.AvailabilityDomain
+import com.oracle.bmc.Region
 
-class  VcnResource (val client: VirtualNetworkClient): Resource<Vcn> {
 
-    val LOG by logger()
+
+class  VcnResource(
+        configurationProvider: AuthenticationDetailsProvider,
+        region: Region,
+        compartment: CompartmentResource?): OciBaseResource<Vcn>(configurationProvider, region, compartment){
+
+    private val client = createClient<VirtualNetworkClient>(configurationProvider, region, VirtualNetworkClient.builder())
     var displayName: String = ""
-    lateinit var compartment: CompartmentResource
     var cidrBlock: String = ""
     var dnsLabel: String? = null
     private var id: String? = null
 
     private var routeTableResource: RouteTableResource? = null
 
-    @Synchronized override fun create() {
+    @Synchronized override fun doCreate() {
 
         if (id != null) {
-            LOG.info("vcn has been already created: $this")
             return
         }
         var details = CreateVcnDetails.builder()
                 .cidrBlock(cidrBlock)
-                .compartmentId(compartment.id)
+                .compartmentId(compartment?.id)
                 .displayName(displayName)
 
         if (!dnsLabel.isNullOrBlank()) {
@@ -39,7 +44,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource<Vcn> {
         id = client.createVcn(request).vcn.id
         val waiter = client.waiters.forVcn(GetVcnRequest.builder().vcnId(id).build(), Vcn.LifecycleState.Available)
         val vcn = waiter.execute().vcn
-        println("Created: " + this)
+        LOG.info("Created: " + this)
 
         //TODO move all this to execution graph
         routeTableResource?.let {
@@ -56,7 +61,7 @@ class  VcnResource (val client: VirtualNetworkClient): Resource<Vcn> {
         //This should add a task to the execution graph
     }
 
-    override fun destroy() {
+    override fun doDestroy() {
         if (id != null) {
             val req = DeleteVcnRequest.builder().vcnId(id).build()
             client.deleteVcn(req)
@@ -77,19 +82,27 @@ class  VcnResource (val client: VirtualNetworkClient): Resource<Vcn> {
         TODO("not implemented")
     }
 
-    override fun update() {
+    override fun doUpdate() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun toString(): String {
-        return "VcnResource(displayName='$displayName', compartmentId='${compartment.id}', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
+        return "VcnResource(displayName='$displayName', compartmentId='${compartment?.id}', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
     }
+}
 
+fun Oci.vcn(provider: AuthenticationDetailsProvider= this.provider,
+            region: Region = this.region,
+            compartment: CompartmentResource? = this.compartment,
+            fn: VcnResource.() -> Unit = {}): VcnResource {
+    var v = VcnResource(provider, region, compartment)
+    v.apply(fn)
+    return v
 }
 
 class  SubnetResource (val client: VirtualNetworkClient): Resource<Subnet> {
 
-    var vcn: VcnResource = VcnResource(client)
+    lateinit var vcn: VcnResource
     lateinit var availabilityDomain: AvailabilityDomain
     var cidrBlock: String = ""
     lateinit var compartment: CompartmentResource
@@ -132,12 +145,14 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource<Subnet> {
     }
 
 
+    /*
     fun vcn(fn: VcnResource.() -> Unit): VcnResource {
-        val v = VcnResource(client)
+        val v = VcnResource()
         v.apply(fn)
         vcn = v
         return v
     }
+    */
 
     override fun dependencies(): List<Resource<*>> {
         return listOf(vcn as Resource<*>)
