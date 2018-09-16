@@ -7,4 +7,3 @@ script:
 
 notifications:
     email: false
-
