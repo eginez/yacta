@@ -1,2 +1,3 @@
 rootProject.name = 'yacta'
+include 'yacta-core', 'yacta-ui'
 
