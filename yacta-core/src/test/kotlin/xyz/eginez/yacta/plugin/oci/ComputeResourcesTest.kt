@@ -24,9 +24,9 @@ class ComputeResourcesTest {
             availabilityDomain = availabilityDomains.first()
             displayName = "DSLInstance"
 
-            image = image(osName="Canonical Ubuntu", osVersion="xxx", gpu=false)
+            image = image(osName = "Canonical Ubuntu", osVersion = "xxx", gpu = false)
 
-            shape = shape(name="Standard1.2", vm=true)
+            shape = shape(name = "Standard1.2", vm = true)
 
             val vnetwork = oci.vcn {
                 displayName = "VcnFromDSL"

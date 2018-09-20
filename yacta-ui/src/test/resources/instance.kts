@@ -1,13 +1,13 @@
 package sampleScripts
 
+import com.oracle.bmc.Region
 import xyz.eginez.yacta.data.asFile
 import xyz.eginez.yacta.plugin.oci.Oci
 import xyz.eginez.yacta.plugin.oci.compartment
-import com.oracle.bmc.Region
 
 val compartmentId = System.getenv("COMPARTMENT_ID")
 check(compartmentId != null && compartmentId.isNotBlank(),
-        {"COMPARTMENT_ID needs to be set as part of environment"})
+        { "COMPARTMENT_ID needs to be set as part of environment" })
 
 val oci = Oci(region = Region.US_PHOENIX_1,
         compartmentId = compartmentId,

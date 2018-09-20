@@ -1,17 +1,17 @@
 package xyz.eginez.yacta.plugin.oci
 
-import xyz.eginez.yacta.data.DataProvider
-import xyz.eginez.yacta.data.Resource
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.identity.IdentityClient
 import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.identity.model.Compartment
 import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
+import xyz.eginez.yacta.data.DataProvider
+import xyz.eginez.yacta.data.Resource
 
 class AvailabilityDomains(configurationProvider: AuthenticationDetailsProvider,
                           val region: Region,
-                          val compartment: CompartmentResource): DataProvider<Set<AvailabilityDomain>> {
+                          val compartment: CompartmentResource) : DataProvider<Set<AvailabilityDomain>> {
     private val client = createClient<IdentityClient>(configurationProvider, region, IdentityClient.builder())
 
     override fun get(): Set<AvailabilityDomain> {
@@ -32,8 +32,7 @@ val <T> OciBaseResource<T>.availabilityDomains: Set<AvailabilityDomain>
     get() = AvailabilityDomains(configurationProvider, region, compartment!!).get()
 
 
-
-class CompartmentResource(val id: String=""): Resource<Compartment> {
+class CompartmentResource(val id: String = "") : Resource<Compartment> {
     override fun create() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

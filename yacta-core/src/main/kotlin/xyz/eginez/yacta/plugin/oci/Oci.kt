@@ -1,7 +1,5 @@
 package xyz.eginez.yacta.plugin.oci
 
-import xyz.eginez.yacta.data.Resource
-import xyz.eginez.yacta.data.logger
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
@@ -10,42 +8,48 @@ import com.oracle.bmc.core.model.Image
 import com.oracle.bmc.core.model.Shape
 import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.objectstorage.ObjectStorageClient
+import xyz.eginez.yacta.data.Resource
+import xyz.eginez.yacta.data.logger
 import java.nio.file.Paths
 
 @DslMarker
 annotation class ResourceMarker
 
 
-val executionGraph : MutableList<Resource<*>> = mutableListOf()
+val executionGraph: MutableList<Resource<*>> = mutableListOf()
 
 
-abstract class OciBaseResource<T> (val configurationProvider: AuthenticationDetailsProvider,
+abstract class OciBaseResource<T>(val configurationProvider: AuthenticationDetailsProvider,
                                   val region: Region,
-                                  var compartment: CompartmentResource?): Resource<T> {
+                                  var compartment: CompartmentResource?) : Resource<T> {
 
     val LOG by logger()
 
     //TODO fix dispatch of listeners
     var listeners: MutableSet<ResourceStateChangeListener> = mutableSetOf(LoggerListener(this))
+
     override fun create() {
-        listeners.forEach{it.willCreate()}
+        listeners.forEach { it.willCreate() }
         doCreate()
-        listeners.forEach{it.didCreate()}
+        listeners.forEach { it.didCreate() }
     }
+
     abstract fun doCreate()
 
     override fun destroy() {
-        listeners.forEach{it.willDestroy()}
+        listeners.forEach { it.willDestroy() }
         doDestroy()
-        listeners.forEach{it.didDestroy()}
+        listeners.forEach { it.didDestroy() }
     }
+
     abstract fun doDestroy()
 
     override fun update() {
-        listeners.forEach{it.willUpdate()}
+        listeners.forEach { it.willUpdate() }
         doUpdate()
-        listeners.forEach{it.didUpdate()}
+        listeners.forEach { it.didUpdate() }
     }
+
     abstract fun doUpdate()
 
 }
@@ -60,10 +64,10 @@ interface ResourceStateChangeListener {
     fun didUpdate()
 }
 
-class LoggerListener(private val resource: OciBaseResource<*>): ResourceStateChangeListener {
+class LoggerListener(private val resource: OciBaseResource<*>) : ResourceStateChangeListener {
     override fun willCreate() = resource.LOG.info("will create: [$resource]")
     override fun didCreate() = resource.LOG.info("did create: [$resource]")
-    override fun willDestroy() =resource.LOG.info("will destroy: [$resource]")
+    override fun willDestroy() = resource.LOG.info("will destroy: [$resource]")
     override fun didDestroy() = resource.LOG.info("did destroy: [$resource]")
     override fun willUpdate() = resource.LOG.info("will update: [$resource]")
     override fun didUpdate() = resource.LOG.info("did update: [$resource]")
@@ -71,16 +75,18 @@ class LoggerListener(private val resource: OciBaseResource<*>): ResourceStateCha
 
 
 @ResourceMarker
-class Oci (val region: Region,
-           val compartmentId: String,
-           val configFilePath: String = Paths.get("~/.oci", "config").toString(),
-           profile: String = "DEFAULT") {
+class Oci(val region: Region,
+          val compartmentId: String,
+          val configFilePath: String = Paths.get("~/.oci", "config").toString(),
+          profile: String = "DEFAULT") {
 
     var provider = ConfigFileAuthenticationDetailsProvider(configFilePath, profile)
     var compartment = CompartmentResource(id = compartmentId)
-    var availabilityDomains:Set<AvailabilityDomain> = mutableSetOf()
+    var availabilityDomains: Set<AvailabilityDomain> = mutableSetOf()
 
-    companion object { val DEFAULT_REGION = Region.US_PHOENIX_1 }
+    companion object {
+        val DEFAULT_REGION = Region.US_PHOENIX_1
+    }
 
 
     fun objectStorage(fn: Oci.() -> Unit) {
@@ -112,7 +118,6 @@ class Oci (val region: Region,
         v.apply(fn)
         return v
     }
-
 
 
     fun computeImages(compartment: CompartmentResource, region: Region = this.region): Set<Image> {

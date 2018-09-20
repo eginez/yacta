@@ -1,20 +1,19 @@
 package xyz.eginez.yacta.plugin.oci
 
-import xyz.eginez.yacta.data.Resource
-import xyz.eginez.yacta.data.logger
+import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.*
 import com.oracle.bmc.core.requests.*
 import com.oracle.bmc.identity.model.AvailabilityDomain
-import com.oracle.bmc.Region
+import xyz.eginez.yacta.data.Resource
+import xyz.eginez.yacta.data.logger
 
 
-
-class  VcnResource(
+class VcnResource(
         configurationProvider: AuthenticationDetailsProvider,
         region: Region,
-        compartment: CompartmentResource?): OciBaseResource<Vcn>(configurationProvider, region, compartment){
+        compartment: CompartmentResource?) : OciBaseResource<Vcn>(configurationProvider, region, compartment) {
 
     private val client = createClient<VirtualNetworkClient>(configurationProvider, region, VirtualNetworkClient.builder())
     var displayName: String = ""
@@ -24,7 +23,8 @@ class  VcnResource(
 
     private var routeTableResource: RouteTableResource? = null
 
-    @Synchronized override fun doCreate() {
+    @Synchronized
+    override fun doCreate() {
 
         if (id != null) {
             return
@@ -91,16 +91,16 @@ class  VcnResource(
     }
 }
 
-fun Oci.vcn(provider: AuthenticationDetailsProvider= this.provider,
-                                        region: Region = this.region,
-                                        compartment: CompartmentResource? = this.compartment,
-                                        fn: VcnResource.() -> Unit = {}): VcnResource {
+fun Oci.vcn(provider: AuthenticationDetailsProvider = this.provider,
+            region: Region = this.region,
+            compartment: CompartmentResource? = this.compartment,
+            fn: VcnResource.() -> Unit = {}): VcnResource {
     var v = VcnResource(provider, region, compartment)
     v.apply(fn)
     return v
 }
 
-class  SubnetResource (val client: VirtualNetworkClient): Resource<Subnet> {
+class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
 
     lateinit var vcn: VcnResource
     lateinit var availabilityDomain: AvailabilityDomain
@@ -131,7 +131,7 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource<Subnet> {
                 .cidrBlock(cidrBlock)
                 .compartmentId(compartment.id)
                 .vcnId(vcnId)
-        name?.let {builder.displayName(it)}
+        name?.let { builder.displayName(it) }
 
         return builder.build()
     }
@@ -167,7 +167,7 @@ class  SubnetResource (val client: VirtualNetworkClient): Resource<Subnet> {
     }
 }
 
-class  VnicResource (val client: VirtualNetworkClient): Resource<Vnic> {
+class VnicResource(val client: VirtualNetworkClient) : Resource<Vnic> {
 
     var subnetId: String = ""
     var publicIp: Boolean = false
@@ -202,7 +202,7 @@ class  VnicResource (val client: VirtualNetworkClient): Resource<Vnic> {
                 .assignPublicIp(publicIp)
 
         hostname?.let { builder.hostnameLabel(it) }
-        name?.let {builder.displayName(it)}
+        name?.let { builder.displayName(it) }
         return builder.build()
     }
 
@@ -222,10 +222,10 @@ class  VnicResource (val client: VirtualNetworkClient): Resource<Vnic> {
     }
 }
 
-fun InstanceResource.vnic(provider: AuthenticationDetailsProvider= this.configurationProvider,
-            region: Region = this.region,
-            compartment: CompartmentResource? = this.compartment,
-            fn: VnicResource.() -> Unit = {}): VnicResource {
+fun InstanceResource.vnic(provider: AuthenticationDetailsProvider = this.configurationProvider,
+                          region: Region = this.region,
+                          compartment: CompartmentResource? = this.compartment,
+                          fn: VnicResource.() -> Unit = {}): VnicResource {
     val vcnClient = VirtualNetworkClient(provider)
     vcnClient.setRegion(region)
     val v = VnicResource(vcnClient)
@@ -233,7 +233,7 @@ fun InstanceResource.vnic(provider: AuthenticationDetailsProvider= this.configur
     return v
 }
 
-class InternetGatewayResource(val client: VirtualNetworkClient): Resource<InternetGateway> {
+class InternetGatewayResource(val client: VirtualNetworkClient) : Resource<InternetGateway> {
     val LOG by logger()
     var internetGateway: InternetGateway? = null
     var displayName: String? = null
@@ -247,12 +247,12 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource<Intern
     }
 
     override fun create() {
-        dependencies().forEach { it.create()}
+        dependencies().forEach { it.create() }
         val builder = CreateInternetGatewayDetails.builder()
         builder.compartmentId(compartment.id())
                 .vcnId(vcn.id())
-        displayName?.let {builder.displayName(it)}
-        enabled?.let { builder.isEnabled(enabled)}
+        displayName?.let { builder.displayName(it) }
+        enabled?.let { builder.isEnabled(enabled) }
         val request = CreateInternetGatewayRequest.builder()
                 .createInternetGatewayDetails(builder.build())
                 .build()
@@ -284,8 +284,7 @@ class InternetGatewayResource(val client: VirtualNetworkClient): Resource<Intern
 }
 
 
-
-class RouteTableResource(val client: VirtualNetworkClient): Resource<RouteTable> {
+class RouteTableResource(val client: VirtualNetworkClient) : Resource<RouteTable> {
     val LOG by logger()
     var rules: MutableList<RouteRuleResource> = mutableListOf()
     var id: String? = null
@@ -338,8 +337,7 @@ class RouteTableResource(val client: VirtualNetworkClient): Resource<RouteTable>
 }
 
 
-
-class RouteRuleResource: Resource<RouteRule> {
+class RouteRuleResource : Resource<RouteRule> {
     var cidrBlock: String = ""
     var destination: String = ""
     var destinationType: RouteRule.DestinationType? = null

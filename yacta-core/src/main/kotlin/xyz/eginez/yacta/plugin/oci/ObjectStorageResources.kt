@@ -1,20 +1,20 @@
 package xyz.eginez.yacta.plugin.oci
 
 
-import xyz.eginez.yacta.data.Resource
-import com.oracle.bmc.objectstorage.model.CreateBucketDetails
-import com.oracle.bmc.objectstorage.requests.*
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.ObjectStorageClient
 import com.oracle.bmc.objectstorage.model.Bucket
+import com.oracle.bmc.objectstorage.model.CreateBucketDetails
+import com.oracle.bmc.objectstorage.requests.*
+import xyz.eginez.yacta.data.Resource
 import java.io.File
 import java.io.InputStream
 
-class BucketResource(val client: ObjectStorageClient): Resource<Bucket> {
+class BucketResource(val client: ObjectStorageClient) : Resource<Bucket> {
 
     var name: String = ""
     var compartmentId: String = ""
-    var accessType : CreateBucketDetails.PublicAccessType? = null
+    var accessType: CreateBucketDetails.PublicAccessType? = null
     var namespace: String? = null
     private var id: String? = null
 
@@ -47,8 +47,9 @@ class BucketResource(val client: ObjectStorageClient): Resource<Bucket> {
             return false
         }
     }
+
     override fun create() {
-        if(namespace.isNullOrBlank()) {
+        if (namespace.isNullOrBlank()) {
             namespace = defaultNamespace()
         }
 
@@ -59,12 +60,12 @@ class BucketResource(val client: ObjectStorageClient): Resource<Bucket> {
 
         println("Creating bucket ${this}")
         val details = CreateBucketDetails(name, compartmentId, emptyMap(), accessType,
-                CreateBucketDetails.StorageTier.Standard, emptyMap(), emptyMap() )
+                CreateBucketDetails.StorageTier.Standard, emptyMap(), emptyMap())
         val request = CreateBucketRequest.builder()
                 .namespaceName(namespace)
                 .createBucketDetails(details)
                 .build()
-         client.createBucket(request)
+        client.createBucket(request)
     }
 
     override fun destroy() {
@@ -88,7 +89,7 @@ class BucketResource(val client: ObjectStorageClient): Resource<Bucket> {
 
 }
 
-class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource): Resource<InputStream> {
+class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource) : Resource<InputStream> {
     var name: String = ""
     var namespace: String? = null
     var file: File? = null
@@ -153,7 +154,6 @@ class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketRe
     override fun update() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-
 
 
     override fun toString(): String {

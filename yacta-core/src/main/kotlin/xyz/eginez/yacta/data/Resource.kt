@@ -27,8 +27,6 @@ interface Resource<T> {
 // interface SharedResource
 
 
-
-
 class LoggerDelegate {
 
     private var logger: Logger? = null
