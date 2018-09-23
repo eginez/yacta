@@ -55,7 +55,18 @@ fun ProvsionToTF(r: VcnResource): String {
 
     return """
 resource ${res.name} "${createName()}" {
-    ${res.properties.joinToString("\n")}
+    ${res.properties.forEachString {
+        it.toString()
+    }}
 }
-""".trimIndent()
+"""
+}
+
+fun <T> List<T>.forEachString(fn: (T) -> String): String {
+    val sb = StringBuilder()
+    this.forEach {
+        sb.append(fn(it))
+        sb.append("\n")
+    }
+    return sb.toString()
 }
