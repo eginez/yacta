@@ -35,3 +35,11 @@ fun <T> createClient(provider: AuthenticationDetailsProvider,
     client.apply(init)
     return client
 }
+
+fun <T> createClient(provider: AuthenticationDetailsProvider,
+                     regionalClientBuilder: RegionalClientBuilder<*, T>,
+                     init: (T) -> Unit = {}): T {
+    var client = regionalClientBuilder.build(provider)
+    client.apply(init)
+    return client
+}

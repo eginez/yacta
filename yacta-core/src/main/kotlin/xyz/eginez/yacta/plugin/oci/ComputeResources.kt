@@ -2,6 +2,7 @@ package xyz.eginez.yacta.plugin.oci
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
+import com.oracle.bmc.core.Compute
 import com.oracle.bmc.core.ComputeClient
 import com.oracle.bmc.core.ComputePaginators
 import com.oracle.bmc.core.VirtualNetworkClient
@@ -17,9 +18,9 @@ import xyz.eginez.yacta.data.DataProvider
 import xyz.eginez.yacta.data.Resource
 
 class InstanceResource(
-        configurationProvider: AuthenticationDetailsProvider,
         region: Region,
-        compartment: CompartmentResource?) : OciBaseResource<Instance>(configurationProvider, region, compartment) {
+        compartment: CompartmentResource?,
+        provisioner: Provisioner<Instance>) : OciBaseResource<Instance>(compartment, region, provisioner) {
     lateinit var availabilityDomain: AvailabilityDomain
     lateinit var image: Image
     lateinit var shape: Shape
@@ -32,7 +33,8 @@ class InstanceResource(
     var sshPublicKey: String? = null
 
     private var id: String? = null
-    private val client = createClient<ComputeClient>(configurationProvider, region, ComputeClient.builder())
+    private val client = createClient<ComputeClient>(configurationProvider, region, ComputeClient.builder()) as Compute
+
 
 
     override fun doCreate() {
@@ -112,7 +114,7 @@ class InstanceResource(
 
 
     override fun toString(): String {
-        return "InstanceResource(provider=$configurationProvider, region=$region, availabilityDomain=$availabilityDomain, compartment=$compartment, image=$image, shape=$shape, vnic=$vnic, displayName=$displayName, hostLabel=$hostLabel, ipxeScript=$ipxeScript, metadata=$metadata, extendedMetadata=$extendedMetadata, sshPublicKey=$sshPublicKey, id=$id, client=$client)"
+        return "InstanceResource(region=$region, availabilityDomain=$availabilityDomain, compartment=$compartment, image=$image, shape=$shape, vnic=$vnic, displayName=$displayName, hostLabel=$hostLabel, ipxeScript=$ipxeScript, metadata=$metadata, extendedMetadata=$extendedMetadata, sshPublicKey=$sshPublicKey, id=$id, client=$client)"
     }
 
 }
@@ -132,7 +134,7 @@ class ComputeImages(configurationProvider: AuthenticationDetailsProvider, region
 }
 
 fun InstanceResource.image(osName: String, osVersion: String = "", gpu: Boolean = false,
-                           configurationProvider: AuthenticationDetailsProvider = this.configurationProvider,
+                           configurationProvider: AuthenticationDetailsProvider = this.configuration.provider,
                            region: Region = this.region,
                            compartment: CompartmentResource? = this.compartment): Image {
     val imgProvider = ComputeImages(configurationProvider, region)

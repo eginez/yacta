@@ -10,65 +10,83 @@ import xyz.eginez.yacta.data.Resource
 import xyz.eginez.yacta.data.logger
 
 
-class VcnResource(
-        configurationProvider: AuthenticationDetailsProvider,
-        region: Region,
-        compartment: CompartmentResource?) : OciBaseResource<Vcn>(configurationProvider, region, compartment) {
-
-    private val client = createClient<VirtualNetworkClient>(configurationProvider, region, VirtualNetworkClient.builder())
-    var displayName: String = ""
-    var cidrBlock: String = ""
-    var dnsLabel: String? = null
-    private var id: String? = null
-
-    private var routeTableResource: RouteTableResource? = null
+class VcnResourceProvisioner (val configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vcn> {
+    private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
 
     @Synchronized
-    override fun doCreate() {
-
-        if (id != null) {
+    override fun doCreate(res: Resource<Vcn>) {
+        val resource = res as VcnResource
+        if (resource.id != null) {
             return
         }
-        var details = CreateVcnDetails.builder()
-                .cidrBlock(cidrBlock)
-                .compartmentId(compartment?.id)
-                .displayName(displayName)
 
-        if (!dnsLabel.isNullOrBlank()) {
-            details = details.dnsLabel(dnsLabel)
+        client.setRegion(resource.region)
+
+        var details = CreateVcnDetails.builder()
+                .cidrBlock(resource.cidrBlock)
+                .compartmentId(resource.compartment?.id)
+                .displayName(resource.displayName)
+
+        if (!resource.dnsLabel.isNullOrBlank()) {
+            details = details.dnsLabel(resource.dnsLabel)
         }
 
         val request = CreateVcnRequest.builder()
                 .createVcnDetails(details.build()).build()
 
-        id = client.createVcn(request).vcn.id
-        val waiter = client.waiters.forVcn(GetVcnRequest.builder().vcnId(id).build(), Vcn.LifecycleState.Available)
+        resource.id = client.createVcn(request).vcn.id
+        val waiter = client.waiters.forVcn(
+                GetVcnRequest.builder()
+                        .vcnId(resource.id)
+                        .build(),
+                Vcn.LifecycleState.Available)
         val vcn = waiter.execute().vcn
-        LOG.info("Created: " + this)
 
         //TODO move all this to execution graph
-        routeTableResource?.let {
+        resource.routeTableResource?.let {
             it.id = vcn.defaultRouteTableId
             it.update()
         }
     }
 
-    fun routeTable(fn: RouteTableResource.() -> Unit): RouteTableResource {
-        routeTableResource = RouteTableResource(client)
-        routeTableResource!!.apply(fn)
-        return routeTableResource!!
-
-        //This should add a task to the execution graph
-    }
-
-    override fun doDestroy() {
-        if (id != null) {
-            val req = DeleteVcnRequest.builder().vcnId(id).build()
+    override fun doDestroy(res: Resource<Vcn>) {
+        val resource = res as VcnResource
+        if (resource.id != null) {
+            val req = DeleteVcnRequest.builder().vcnId(resource.id).build()
             client.deleteVcn(req)
-            val waiter = client.waiters.forVcn(GetVcnRequest.builder().vcnId(id).build(), Vcn.LifecycleState.Terminated)
+            val waiter = client.waiters
+                    .forVcn(GetVcnRequest.builder()
+                            .vcnId(resource.id)
+                            .build(), Vcn.LifecycleState.Terminated)
             waiter.execute()
         }
     }
+
+    override fun doGet(res: Resource<Vcn>): Vcn {
+        val resource = res as VcnResource
+        val vcnRequest = GetVcnRequest.builder()
+                .vcnId(resource.id)
+                .build()
+
+        return client.getVcn(vcnRequest).vcn
+    }
+
+    override fun doUpdate(resource: Resource<Vcn>) {
+        TODO("not implemented")
+    }
+}
+
+class VcnResource(
+        compartment: CompartmentResource?,
+        region: Region,
+        provisioner: Provisioner<Vcn>) : OciBaseResource<Vcn>(compartment, region, provisioner) {
+
+    var displayName: String = ""
+    var cidrBlock: String = ""
+    var dnsLabel: String? = null
+    var id: String? = null
+    var routeTableResource: RouteTableResource? = null
+
 
     override fun id(): String {
         return id.orEmpty()
@@ -76,14 +94,6 @@ class VcnResource(
 
     override fun dependencies(): List<Resource<*>> {
         return emptyList()
-    }
-
-    override fun get(): Vcn {
-        TODO("not implemented")
-    }
-
-    override fun doUpdate() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun toString(): String {
@@ -94,12 +104,18 @@ class VcnResource(
 fun Oci.vcn(provider: AuthenticationDetailsProvider = this.provider,
             region: Region = this.region,
             compartment: CompartmentResource? = this.compartment,
+            customProvisioner: Provisioner<Vcn>? = null,
             fn: VcnResource.() -> Unit = {}): VcnResource {
-    var v = VcnResource(provider, region, compartment)
+
+    val provisioner = customProvisioner ?: VcnResourceProvisioner(provider)
+    val v = VcnResource(compartment, region, provisioner)
     v.apply(fn)
     return v
 }
 
+/**
+ *
+ */
 class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
 
     lateinit var vcn: VcnResource
@@ -167,8 +183,10 @@ class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
     }
 }
 
-class VnicResource(val client: VirtualNetworkClient) : Resource<Vnic> {
-
+class VnicResource(
+        compartment: CompartmentResource?,
+        region: Region,
+        provisioner: Provisioner<Vcn>) : OciBaseResource<Vcn>(compartment, region, provisioner) {
     var subnetId: String = ""
     var publicIp: Boolean = false
     var name: String? = null
@@ -178,10 +196,7 @@ class VnicResource(val client: VirtualNetworkClient) : Resource<Vnic> {
     override fun create() {
         //create dependencies
         dependencies().forEach { it.create() }
-
-        subnetId = subnet?.id.orEmpty()
-        println("Created: " + this)
-        return
+        provisioner.doCreate(this)
     }
 
     override fun destroy() {
@@ -207,7 +222,7 @@ class VnicResource(val client: VirtualNetworkClient) : Resource<Vnic> {
     }
 
     fun subnet(fn: SubnetResource.() -> Unit): SubnetResource {
-        val v = SubnetResource(client)
+        val v = SubnetResource()
         v.apply(fn)
         subnet = v
         return v
@@ -222,13 +237,35 @@ class VnicResource(val client: VirtualNetworkClient) : Resource<Vnic> {
     }
 }
 
-fun InstanceResource.vnic(provider: AuthenticationDetailsProvider = this.configurationProvider,
-                          region: Region = this.region,
+class VnicResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vnic> {
+    private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
+
+    override fun doCreate(resource: Resource<Vnic>) {
+        val res  = resource as VnicResource
+        res.subnetId = res.subnet?.id.orEmpty()
+
+    }
+
+    override fun doDestroy(resource: Resource<Vnic>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+    override fun doUpdate(resource: Resource<Vnic>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun doGet(resource: Resource<Vnic>): Vnic {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+}
+
+fun InstanceResource.vnic(region: Region = this.region,
                           compartment: CompartmentResource? = this.compartment,
+                          customProvisioner: Provisioner<Vcn>? = null,
                           fn: VnicResource.() -> Unit = {}): VnicResource {
-    val vcnClient = VirtualNetworkClient(provider)
-    vcnClient.setRegion(region)
-    val v = VnicResource(vcnClient)
+
+    val provisioner  = customProvisioner ?: VnicResourceProvisioner(Oci.configurationProvider())
+    val v = VnicResource(compartment, provisioner)
     v.apply(fn)
     return v
 }
@@ -383,6 +420,14 @@ class RouteRuleResource : Resource<RouteRule> {
     override fun toString(): String {
         return super.toString()
     }
+
+}
+
+//This should add a task to the execution graph
+fun VcnResource.routeTable(fn: RouteTableResource.() -> Unit): RouteTableResource {
+    routeTableResource = RouteTableResource(client)
+    routeTableResource!!.apply(fn)
+    return routeTableResource!!
 
 }
 

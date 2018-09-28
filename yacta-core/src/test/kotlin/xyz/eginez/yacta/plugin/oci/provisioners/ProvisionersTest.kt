@@ -10,7 +10,7 @@ import xyz.eginez.yacta.plugin.oci.vcn
 class ProvisionersTest {
     val oci = Oci(region = Region.US_PHOENIX_1,
             compartmentId = "ocidv1:tenancy:oc1:phx:1460406592660:aaaaaaaab4faofrfkxecohhjuivjq262pu",
-            configFilePath = "~/.oci/config")
+            configFilePath = "~/.oraclebmc/config")
 
     @Test
     fun simpleTest() {

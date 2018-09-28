@@ -19,9 +19,17 @@ annotation class ResourceMarker
 val executionGraph: MutableList<Resource<*>> = mutableListOf()
 
 
-abstract class OciBaseResource<T>(val configurationProvider: AuthenticationDetailsProvider,
-                                  val region: Region,
-                                  var compartment: CompartmentResource?) : Resource<T> {
+interface Provisioner<T> {
+    fun doCreate(resource: Resource<T>)
+    fun doDestroy(resource: Resource<T>)
+    fun doUpdate(resource: Resource<T>)
+    fun doGet(resource: Resource<T>): T
+}
+
+abstract class OciBaseResource<T>(
+        var compartment: CompartmentResource?,
+        var region: Region,
+        var provisioner: Provisioner<T>) : Resource<T> {
 
     val LOG by logger()
 
@@ -30,28 +38,25 @@ abstract class OciBaseResource<T>(val configurationProvider: AuthenticationDetai
 
     override fun create() {
         listeners.forEach { it.willCreate() }
-        doCreate()
+        provisioner.doCreate(this)
         listeners.forEach { it.didCreate() }
     }
 
-    abstract fun doCreate()
-
     override fun destroy() {
         listeners.forEach { it.willDestroy() }
-        doDestroy()
+        provisioner.doDestroy(this)
         listeners.forEach { it.didDestroy() }
     }
 
-    abstract fun doDestroy()
-
     override fun update() {
         listeners.forEach { it.willUpdate() }
-        doUpdate()
+        provisioner.doUpdate(this )
         listeners.forEach { it.didUpdate() }
     }
 
-    abstract fun doUpdate()
-
+    override fun get(): T {
+        return provisioner.doGet(this)
+    }
 }
 
 
@@ -83,10 +88,6 @@ class Oci(val region: Region,
     var provider = ConfigFileAuthenticationDetailsProvider(configFilePath, profile)
     var compartment = CompartmentResource(id = compartmentId)
     var availabilityDomains: Set<AvailabilityDomain> = mutableSetOf()
-
-    companion object {
-        val DEFAULT_REGION = Region.US_PHOENIX_1
-    }
 
 
     fun objectStorage(fn: Oci.() -> Unit) {
@@ -131,6 +132,8 @@ class Oci(val region: Region,
         ads.compartment = compartment
         return ads.get()
     }
+
+    static
 
 }
 

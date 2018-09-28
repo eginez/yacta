@@ -10,6 +10,7 @@ import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
 
 
+
 class TFProperty<T, R>(val instance: Any?, val prop: KProperty1<T, R>) {
     override fun toString(): String {
         if (instance == null) {
@@ -70,3 +71,6 @@ fun <T> List<T>.forEachString(fn: (T) -> String): String {
     }
     return sb.toString()
 }
+
+
+
