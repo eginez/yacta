@@ -95,7 +95,7 @@ fun Oci.vcn(provider: AuthenticationDetailsProvider= this.provider,
                                         region: Region = this.region,
                                         compartment: CompartmentResource? = this.compartment,
                                         fn: VcnResource.() -> Unit = {}): VcnResource {
-    var v = VcnResource(provider, region, compartment)
+    val v = VcnResource(provider, region, compartment)
     v.apply(fn)
     return v
 }
