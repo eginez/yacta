@@ -1,25 +1,31 @@
 package xyz.eginez.yacta.plugin.oci
 
 
+import com.oracle.bmc.Region
+import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import xyz.eginez.yacta.data.Resource
 import com.oracle.bmc.objectstorage.model.CreateBucketDetails
 import com.oracle.bmc.objectstorage.requests.*
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.ObjectStorageClient
 import com.oracle.bmc.objectstorage.model.Bucket
+import com.oracle.bmc.objectstorage.model.UpdateBucketDetails
 import java.io.File
 import java.io.InputStream
 
-class BucketResource(val client: ObjectStorageClient): Resource<Bucket> {
+class BucketResource (configurationProvider: AuthenticationDetailsProvider,
+                      region: Region,
+                      compartment: CompartmentResource?): OciBaseResource<Bucket>(configurationProvider, region, compartment){
 
+    private val client = createClient<ObjectStorageClient>(configurationProvider, region, ObjectStorageClient.builder())
     var name: String = ""
-    var compartmentId: String = ""
     var accessType : CreateBucketDetails.PublicAccessType? = null
     var namespace: String? = null
     private var id: String? = null
+    var objects = mutableSetOf<ObjectResource>()
 
     override fun toString(): String {
-        return "BucketResource(namespace='${namespace}' name='$name', compartmentId='$compartmentId', accessType=$accessType)"
+        return "BucketResource(namespace='${namespace}' name='$name', compartmentId='$compartment', accessType=$accessType)"
     }
 
     fun defaultNamespace(): String {
@@ -34,129 +40,127 @@ class BucketResource(val client: ObjectStorageClient): Resource<Bucket> {
         return emptyList()
     }
 
-    fun isPresent(): Boolean {
-        val request = GetBucketRequest.builder()
-                .bucketName(name)
-                .namespaceName(namespace)
-                .build()
-        try {
-            val response = client.getBucket(request)
-            return true
-        } catch (ex: BmcException) {
-            println("Failed to get bucket: ${ex.statusCode}")
-            return false
-        }
-    }
-    override fun create() {
+    override fun doCreate() {
         if(namespace.isNullOrBlank()) {
             namespace = defaultNamespace()
         }
-
-        if (isPresent()) {
-            println("Bucket already there. Skipping creation")
-            return
-        }
-
-        println("Creating bucket ${this}")
-        val details = CreateBucketDetails(name, compartmentId, emptyMap(), accessType,
+        val details = CreateBucketDetails(name, compartment?.id(), emptyMap(), accessType,
                 CreateBucketDetails.StorageTier.Standard, emptyMap(), emptyMap() )
         val request = CreateBucketRequest.builder()
                 .namespaceName(namespace)
                 .createBucketDetails(details)
                 .build()
          client.createBucket(request)
+
+        objects.forEach { it.create() }
     }
 
-    override fun destroy() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-
-    fun obj(fn: ObjectResource.() -> Unit) {
-        val o = ObjectResource(client, this)
-        o.apply(fn)
-        executionGraph.add(o)
+    override fun doDestroy() {
+        objects.forEach { it.doDestroy() }
+        val req = DeleteBucketRequest.builder()
+                .bucketName(name)
+                .namespaceName(namespace)
+                .build()
+        client.deleteBucket(req)
     }
 
     override fun get(): Bucket {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val req = GetBucketRequest.builder()
+                .bucketName(name)
+                .namespaceName(namespace)
+                .build()
+        val response = client.getBucket(req)
+        return response.bucket
     }
 
-    override fun update() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun doUpdate() {
+        val req = UpdateBucketRequest.builder()
+                .bucketName(name)
+                .updateBucketDetails(UpdateBucketDetails.builder()
+                        .compartmentId(compartment?.id()).build())
+                .build()
+        client.updateBucket(req)
     }
 
+    fun file(f: File){
+        val o = ObjectResource(configurationProvider, region, compartment)
+        o.bucket = this
+        o.file = f
+        objects.add(o)
+    }
 }
 
-class ObjectResource(val client: ObjectStorageClient, val parentBucket: BucketResource): Resource<InputStream> {
+fun Oci.bucket(provider: AuthenticationDetailsProvider= this.provider,
+            region: Region = this.region,
+            compartment: CompartmentResource? = this.compartment,
+            fn: BucketResource.() -> Unit = {}): BucketResource {
+    val v = BucketResource(provider, region, compartment)
+    v.apply(fn)
+    return v
+}
+
+class ObjectResource (configurationProvider: AuthenticationDetailsProvider,
+                      region: Region,
+                      compartment: CompartmentResource?): OciBaseResource<InputStream>(configurationProvider, region, compartment){
     var name: String = ""
-    var namespace: String? = null
+    lateinit var bucket: BucketResource
     var file: File? = null
+    private val client = createClient<ObjectStorageClient>(configurationProvider, region, ObjectStorageClient.builder())
 
     override fun id(): String {
-        return name
+        return "$bucket/$name"
     }
 
     override fun dependencies(): List<Resource<*>> {
-        return listOf(parentBucket)
+        return emptyList()
     }
 
-    override fun create() {
-        if (file == null) {
-            throw IllegalArgumentException("file property has to be set")
-        }
+    override fun doCreate() {
+        checkNotNull(file)
 
-
-        if (!isDifferent()) {
-            println("Skip creating object")
-            return
-        }
-
-        println("Creating object ${this}")
+        name = file!!.name
         val request = PutObjectRequest.builder()
-                .bucketName(parentBucket.name)
-                .namespaceName(parentBucket.namespace)
-                .objectName(file?.name)
-                .contentLength(file?.length())
-                .putObjectBody(file?.inputStream())
+                .bucketName(bucket.name)
+                .namespaceName(bucket.namespace)
+                .objectName(name)
+                .contentLength(file!!.length())
+                .putObjectBody(file!!.inputStream())
                 .build()
 
         client.putObject(request)
     }
 
-    override fun destroy() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    private fun isDifferent(): Boolean {
-        val request = GetObjectRequest.builder()
-                .bucketName(parentBucket.name)
-                .namespaceName(parentBucket.namespace)
-                .objectName(file?.name)
+    override fun doDestroy() {
+        val req = DeleteObjectRequest.builder()
+                .bucketName(bucket.name)
+                .namespaceName(bucket.namespace)
+                .objectName(name)
                 .build()
-        try {
-            val response = client.getObject(request)
-            return response.contentLength != file?.length()
-        } catch (ex: BmcException) {
-            println("Failed to get bucket: ${ex.statusCode}")
-            if (ex.statusCode in 400..499) {
-                return true
-            }
-            throw ex
-        }
+        client.deleteObject(req)
     }
 
     override fun get(): InputStream {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val req = GetObjectRequest.builder()
+                .bucketName(bucket.name)
+                .namespaceName(bucket.namespace)
+                .objectName(name)
+                .build()
+        val res = client.getObject(req)
+        return res.inputStream
     }
 
-    override fun update() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun doUpdate() {
+        throw IllegalStateException("Can not update object")
     }
-
-
 
     override fun toString(): String {
-        return "ObjectResource(parentBucket=$parentBucket, name='$name', namespace=$namespace, file=$file)"
+        return "ObjectResource(parentBucket=$bucket, name='$name', file=$file)"
     }
+}
+
+fun BucketResource.obj(fn: ObjectResource.() -> Unit) {
+    val o = ObjectResource(configurationProvider, region, compartment)
+    o.bucket = this
+    this.objects.add(o)
+
 }

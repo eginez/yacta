@@ -16,7 +16,6 @@ import java.nio.file.Paths
 annotation class ResourceMarker
 
 
-val executionGraph : MutableList<Resource<*>> = mutableListOf()
 
 
 abstract class OciBaseResource<T> (val configurationProvider: AuthenticationDetailsProvider,
@@ -83,6 +82,7 @@ class Oci (val region: Region,
     companion object { val DEFAULT_REGION = Region.US_PHOENIX_1 }
 
 
+    /*
     fun objectStorage(fn: Oci.() -> Unit) {
         fn()
         println(executionGraph)
@@ -96,6 +96,7 @@ class Oci (val region: Region,
         executionGraph.add(n)
         n.apply(fn)
     }
+    */
 
 
     fun instance(fn: InstanceResource.() -> Unit): InstanceResource {
