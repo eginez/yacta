@@ -3,7 +3,7 @@ install: true
 jdk:
     - oraclejdk8
 script:
-    - ./gradlew --console=plain check
+    - ./gradlew --console=plain assemble
 
 notifications:
     email: false
