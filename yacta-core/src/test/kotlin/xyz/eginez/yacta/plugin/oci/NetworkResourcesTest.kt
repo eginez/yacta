@@ -7,6 +7,9 @@ import org.junit.Test
 class NetworkResourcesTest {
     @Test
     fun simpleVcn() {
+        val appMode = module {
+
+        }
         val compartmentId = "testcompartment"
         val oci = Oci(region = Region.US_PHOENIX_1,
                 compartmentId = compartmentId,

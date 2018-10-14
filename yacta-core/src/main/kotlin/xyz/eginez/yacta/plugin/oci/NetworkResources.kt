@@ -10,7 +10,7 @@ import xyz.eginez.yacta.data.Resource
 import xyz.eginez.yacta.data.logger
 
 
-class VcnResourceProvisioner (val configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vcn> {
+class DefaultVcnResourceProvisioner (val configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vcn> {
     private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
 
     @Synchronized
@@ -104,18 +104,14 @@ class VcnResource(
 fun Oci.vcn(provider: AuthenticationDetailsProvider = this.provider,
             region: Region = this.region,
             compartment: CompartmentResource? = this.compartment,
-            customProvisioner: Provisioner<Vcn>? = null,
+            provisioner: Provisioner<Vcn> = DefaultVcnResourceProvisioner(provider),
             fn: VcnResource.() -> Unit = {}): VcnResource {
 
-    val provisioner = customProvisioner ?: VcnResourceProvisioner(provider)
     val v = VcnResource(compartment, region, provisioner)
     v.apply(fn)
     return v
 }
 
-/**
- *
- */
 class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
 
     lateinit var vcn: VcnResource
@@ -186,7 +182,7 @@ class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
 class VnicResource(
         compartment: CompartmentResource?,
         region: Region,
-        provisioner: Provisioner<Vcn>) : OciBaseResource<Vcn>(compartment, region, provisioner) {
+        provisioner: Provisioner<Vnic>) : OciBaseResource<Vnic>(compartment, region, provisioner) {
     var subnetId: String = ""
     var publicIp: Boolean = false
     var name: String? = null
@@ -237,7 +233,7 @@ class VnicResource(
     }
 }
 
-class VnicResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vnic> {
+class DefaultVnicResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vnic> {
     private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
 
     override fun doCreate(resource: Resource<Vnic>) {
@@ -261,11 +257,11 @@ class VnicResourceProvisioner (configurationProvider: AuthenticationDetailsProvi
 
 fun InstanceResource.vnic(region: Region = this.region,
                           compartment: CompartmentResource? = this.compartment,
-                          customProvisioner: Provisioner<Vcn>? = null,
+                          customProvisioner: Provisioner<Vnic>? = null,
                           fn: VnicResource.() -> Unit = {}): VnicResource {
 
-    val provisioner  = customProvisioner ?: VnicResourceProvisioner(Oci.configurationProvider())
-    val v = VnicResource(compartment, provisioner)
+    val provisioner  = customProvisioner ?: DefaultVnicResourceProvisioner(ociRef?.provider as AuthenticationDetailsProvider)
+    val v = VnicResource(compartment, region, provisioner )
     v.apply(fn)
     return v
 }

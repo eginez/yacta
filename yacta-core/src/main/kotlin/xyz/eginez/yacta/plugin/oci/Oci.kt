@@ -16,8 +16,6 @@ import java.nio.file.Paths
 annotation class ResourceMarker
 
 
-val executionGraph: MutableList<Resource<*>> = mutableListOf()
-
 
 interface Provisioner<T> {
     fun doCreate(resource: Resource<T>)
@@ -32,6 +30,8 @@ abstract class OciBaseResource<T>(
         var provisioner: Provisioner<T>) : Resource<T> {
 
     val LOG by logger()
+    val p2 by inject<Provisioner<T>>()
+
 
     //TODO fix dispatch of listeners
     var listeners: MutableSet<ResourceStateChangeListener> = mutableSetOf(LoggerListener(this))
@@ -59,24 +59,7 @@ abstract class OciBaseResource<T>(
     }
 }
 
-
-interface ResourceStateChangeListener {
-    fun willCreate()
-    fun didCreate()
-    fun willDestroy()
-    fun didDestroy()
-    fun willUpdate()
-    fun didUpdate()
-}
-
-class LoggerListener(private val resource: OciBaseResource<*>) : ResourceStateChangeListener {
-    override fun willCreate() = resource.LOG.info("will create: [$resource]")
-    override fun didCreate() = resource.LOG.info("did create: [$resource]")
-    override fun willDestroy() = resource.LOG.info("will destroy: [$resource]")
-    override fun didDestroy() = resource.LOG.info("did destroy: [$resource]")
-    override fun willUpdate() = resource.LOG.info("will update: [$resource]")
-    override fun didUpdate() = resource.LOG.info("did update: [$resource]")
-}
+var ociRef: Oci? = null
 
 
 @ResourceMarker
@@ -85,11 +68,12 @@ class Oci(val region: Region,
           val configFilePath: String = Paths.get("~/.oci", "config").toString(),
           profile: String = "DEFAULT") {
 
+    init { ociRef = this }
     var provider = ConfigFileAuthenticationDetailsProvider(configFilePath, profile)
     var compartment = CompartmentResource(id = compartmentId)
     var availabilityDomains: Set<AvailabilityDomain> = mutableSetOf()
 
-
+    /*
     fun objectStorage(fn: Oci.() -> Unit) {
         fn()
         println(executionGraph)
@@ -103,6 +87,7 @@ class Oci(val region: Region,
         executionGraph.add(n)
         n.apply(fn)
     }
+    */
 
 
     fun instance(fn: InstanceResource.() -> Unit): InstanceResource {
@@ -133,8 +118,25 @@ class Oci(val region: Region,
         return ads.get()
     }
 
-    static
+}
 
+
+interface ResourceStateChangeListener {
+    fun willCreate()
+    fun didCreate()
+    fun willDestroy()
+    fun didDestroy()
+    fun willUpdate()
+    fun didUpdate()
+}
+
+class LoggerListener(private val resource: OciBaseResource<*>) : ResourceStateChangeListener {
+    override fun willCreate() = resource.LOG.info("will create: [$resource]")
+    override fun didCreate() = resource.LOG.info("did create: [$resource]")
+    override fun willDestroy() = resource.LOG.info("will destroy: [$resource]")
+    override fun didDestroy() = resource.LOG.info("did destroy: [$resource]")
+    override fun willUpdate() = resource.LOG.info("will update: [$resource]")
+    override fun didUpdate() = resource.LOG.info("did update: [$resource]")
 }
 
 

@@ -55,6 +55,7 @@ class ComputeResourcesTest {
             }
         }
 
-        //instance.create()
+        instance.create()
+        instance.publicIp()
     }
 }
