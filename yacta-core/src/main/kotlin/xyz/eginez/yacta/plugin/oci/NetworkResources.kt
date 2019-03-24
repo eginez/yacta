@@ -2,6 +2,7 @@ package xyz.eginez.yacta.plugin.oci
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
+import com.oracle.bmc.core.ComputeClient
 import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.*
 import com.oracle.bmc.core.requests.*
@@ -10,7 +11,7 @@ import xyz.eginez.yacta.data.Resource
 import xyz.eginez.yacta.data.logger
 
 
-class DefaultVcnResourceProvisioner (val configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vcn> {
+class DefaultVcnResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vcn> {
     private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
 
     @Synchronized
@@ -112,6 +113,60 @@ fun Oci.vcn(provider: AuthenticationDetailsProvider = this.provider,
     return v
 }
 
+
+class DefaultSubnetResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Subnet> {
+    private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
+
+    override fun doCreate(resource: Resource<Subnet>) {
+        val subnet = resource as SubnetResource
+        val d = toCreateSubnetDetails(subnet)
+        val req = CreateSubnetRequest.builder().createSubnetDetails(d).build()
+        val res = client.createSubnet(req)
+        subnet.id = res.subnet.id
+    }
+
+    private fun toCreateSubnetDetails(subnet: SubnetResource): CreateSubnetDetails? {
+        var builder = CreateSubnetDetails.builder()
+                .availabilityDomain(subnet.availabilityDomain.name)
+                .cidrBlock(subnet.cidrBlock)
+                .compartmentId(subnet.compartment.id)
+                .vcnId(subnet.vcnId)
+        subnet.name?.let { builder.displayName(it) }
+
+        return builder.build()
+    }
+
+    override fun doDestroy(resource: Resource<Subnet>) {
+        val subnet = resource as SubnetResource
+        var deleteSubnetRequest = DeleteSubnetRequest.builder()
+                .subnetId(subnet.id)
+                .build()
+
+        client.deleteSubnet(deleteSubnetRequest)
+    }
+
+    override fun doUpdate(resource: Resource<Subnet>) {
+        val subnet = resource as SubnetResource
+        var details = UpdateSubnetDetails.builder()
+                .displayName(subnet.name)
+                .build()
+
+        var request = UpdateSubnetRequest.builder()
+                .updateSubnetDetails(details)
+                .build()
+        client.updateSubnet(request)
+    }
+
+    override fun doGet(resource: Resource<Subnet>): Subnet {
+        var request = GetSubnetRequest.builder()
+                .subnetId(resource.id())
+                .build()
+        val response = client.getSubnet(request)
+        return response.subnet
+    }
+
+}
+
 class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
 
     lateinit var vcn: VcnResource
@@ -126,27 +181,6 @@ class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
     var dnsLabel: String = ""
     var id: String = ""
 
-    override fun create() {
-        dependencies().forEach { it.create() }
-        this.vcnId = vcn.id()
-
-        val d = toCreateSubnetDetails()
-        val req = CreateSubnetRequest.builder().createSubnetDetails(d).build()
-        val res = client.createSubnet(req)
-        id = res.subnet.id
-        println("Created: " + this)
-    }
-
-    private fun toCreateSubnetDetails(): CreateSubnetDetails? {
-        var builder = CreateSubnetDetails.builder()
-                .availabilityDomain(availabilityDomain.name)
-                .cidrBlock(cidrBlock)
-                .compartmentId(compartment.id)
-                .vcnId(vcnId)
-        name?.let { builder.displayName(it) }
-
-        return builder.build()
-    }
 
     override fun destroy() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -234,12 +268,11 @@ class VnicResource(
 }
 
 class DefaultVnicResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vnic> {
-    private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
+    private val client = createClient<ComputeClient>(configurationProvider, ComputeClient.builder())
 
     override fun doCreate(resource: Resource<Vnic>) {
         val res  = resource as VnicResource
         res.subnetId = res.subnet?.id.orEmpty()
-
     }
 
     override fun doDestroy(resource: Resource<Vnic>) {
@@ -265,6 +298,7 @@ fun InstanceResource.vnic(region: Region = this.region,
     v.apply(fn)
     return v
 }
+
 
 class InternetGatewayResource(val client: VirtualNetworkClient) : Resource<InternetGateway> {
     val LOG by logger()

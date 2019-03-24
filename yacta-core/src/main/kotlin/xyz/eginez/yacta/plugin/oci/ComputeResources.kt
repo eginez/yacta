@@ -119,6 +119,12 @@ class InstanceResource(
 
 }
 
+fun Oci.instance(fn: InstanceResource.() -> Unit): InstanceResource {
+    val v = InstanceResource(provider, region, compartment)
+    v.apply(fn)
+    return v
+}
+
 class ComputeImages(configurationProvider: AuthenticationDetailsProvider, region: Region) : DataProvider<Set<Image>> {
     private val client = createClient<ComputeClient>(configurationProvider, region, ComputeClient.builder())
     private val paginator = ComputePaginators(client)::listImagesResponseIterator
