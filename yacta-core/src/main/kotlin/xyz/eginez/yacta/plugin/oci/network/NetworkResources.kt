@@ -1,4 +1,4 @@
-package xyz.eginez.yacta.plugin.oci
+package xyz.eginez.yacta.plugin.oci.network
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
@@ -7,9 +7,15 @@ import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.*
 import com.oracle.bmc.core.requests.*
 import com.oracle.bmc.identity.model.AvailabilityDomain
+import xyz.eginez.yacta.data.Provisioner
 import xyz.eginez.yacta.data.Resource
 import xyz.eginez.yacta.data.logger
+import xyz.eginez.yacta.plugin.oci.identity.CompartmentResource
+import xyz.eginez.yacta.plugin.oci.Oci
+import xyz.eginez.yacta.plugin.oci.OciBaseResource
+import xyz.eginez.yacta.plugin.oci.createClient
 
+/*
 
 class DefaultVcnResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vcn> {
     private val client = createClient<VirtualNetworkClient>(configurationProvider, VirtualNetworkClient.builder())
@@ -79,8 +85,7 @@ class DefaultVcnResourceProvisioner (configurationProvider: AuthenticationDetail
 
 class VcnResource(
         compartment: CompartmentResource?,
-        region: Region,
-        provisioner: Provisioner<Vcn>) : OciBaseResource<Vcn>(compartment, region, provisioner) {
+        region: Region) : OciBaseResource<Vcn>(compartment, region) {
 
     var displayName: String = ""
     var cidrBlock: String = ""
@@ -97,18 +102,17 @@ class VcnResource(
         return emptyList()
     }
 
+
     override fun toString(): String {
         return "VcnResource(displayName='$displayName', compartmentId='${compartment?.id}', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
     }
 }
 
-fun Oci.vcn(provider: AuthenticationDetailsProvider = this.provider,
-            region: Region = this.region,
-            compartment: CompartmentResource? = this.compartment,
-            provisioner: Provisioner<Vcn> = DefaultVcnResourceProvisioner(provider),
+fun Oci.vcn(region: Region = this.region,
+            compartment: CompartmentResource? = this.compartmentResource,
             fn: VcnResource.() -> Unit = {}): VcnResource {
 
-    val v = VcnResource(compartment, region, provisioner)
+    val v = VcnResource(compartment, region)
     v.apply(fn)
     return v
 }
@@ -346,7 +350,7 @@ class InternetGatewayResource(val client: VirtualNetworkClient) : Resource<Inter
     }
 
     override fun toString(): String {
-        return "InternetGatewayResource(internetGateway=$internetGateway, displayName=$displayName, enabled=$enabled, compartment=$compartment, vcn=$vcn)"
+        return "InternetGatewayResource(internetGateway=$internetGateway, displayName=$displayName, enabled=$enabled, compartmentResource=$compartment, vcn=$vcn)"
     }
 }
 
@@ -460,4 +464,4 @@ fun VcnResource.routeTable(fn: RouteTableResource.() -> Unit): RouteTableResourc
     return routeTableResource!!
 
 }
-
+*/

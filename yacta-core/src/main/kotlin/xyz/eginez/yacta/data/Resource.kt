@@ -4,27 +4,21 @@ import java.util.logging.Logger
 import kotlin.reflect.KProperty
 
 
-interface Resource<T> {
+interface Resource {
     fun id(): String
-
-    fun create()
-
-    fun prepare() = {}
-
-    fun destroy()
-
-    fun get(): T
-
-    fun update()
-
-    fun dependencies(): List<*>
-
+    fun dependencies(): List<Resource>
 }
 
+interface DataProvider<out T> {
+    fun get(): T
+}
 
-// interface StatefulResource
-// CRUDResource
-// interface SharedResource
+interface Provisioner<T> {
+    fun doCreate(resource: Resource)
+    fun doDestroy(resource: Resource)
+    fun doUpdate(resource: Resource)
+    fun doGet(resource: Resource): T
+}
 
 
 class LoggerDelegate {
@@ -38,6 +32,5 @@ class LoggerDelegate {
 
 }
 
-//
 
 fun logger() = LoggerDelegate()
