@@ -11,7 +11,6 @@ import xyz.eginez.yacta.data.ResourceProperty
 import java.io.Writer
 import kotlin.reflect.KClass
 import kotlin.reflect.full.*
-import kotlin.reflect.jvm.javaField
 
 
 data class TFResource(val name: String, val properties: Map<String,String>)
@@ -31,7 +30,8 @@ fun toTFRes(name: String, r: Any): TFResource {
                     .isSubtypeOf(CompartmentResource::class.createType())
             var pVal = it.toString()
             if (isRes) {
-                pVal = klass.memberFunctions.first { f -> f.name == "id" }.call(r).toString()
+                val parentCompartment = it as CompartmentResource
+                pVal = parentCompartment.id()
             }
             tfProperties.put(resourceProp.name, pVal)
         }
