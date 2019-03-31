@@ -3,6 +3,7 @@ package xyz.eginez.yacta.plugin.oci
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
 import com.oracle.bmc.common.RegionalClientBuilder
+import xyz.eginez.yacta.core.Resource
 
 fun <T, R> fullyList(createRequestFn: (String?) -> R, listFn: (R) -> Pair<String?, List<T>>): List<T> {
     val allItems = mutableListOf<T>()
@@ -43,3 +44,10 @@ fun <T> createClient(provider: AuthenticationDetailsProvider,
     client.apply(init)
     return client
 }
+
+fun addIfPresent(res: Resource?, l: MutableList<Resource>) {
+    if (res != null) {
+        l.add(res)
+    }
+}
+

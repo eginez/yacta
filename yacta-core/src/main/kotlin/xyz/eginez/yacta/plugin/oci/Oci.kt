@@ -3,11 +3,9 @@ package xyz.eginez.yacta.plugin.oci
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
 import com.oracle.bmc.identity.model.AvailabilityDomain
-import xyz.eginez.yacta.data.Resource
-import xyz.eginez.yacta.data.ResourceProperty
-import xyz.eginez.yacta.data.logger
-import xyz.eginez.yacta.plugin.oci.identity.AvailabilityDomains
-import xyz.eginez.yacta.plugin.oci.identity.CompartmentResource
+import xyz.eginez.yacta.core.Resource
+import xyz.eginez.yacta.core.ResourceProperty
+import xyz.eginez.yacta.core.logger
 import java.nio.file.Paths
 
 @DslMarker
@@ -15,10 +13,14 @@ annotation class ResourceMarker
 
 
 abstract class OciBaseResource(
-        @ResourceProperty var compartment: CompartmentResource?,
+        @ResourceProperty var parentCompartment: CompartmentResource?,
         var region: Region) : Resource {
 
+    protected val children = mutableListOf<Resource>()
     val LOG by logger()
+
+    fun addChild(r: Resource) = children.add(r)
+    override fun children(): List<Resource> =  children
 
 }
 
@@ -33,13 +35,13 @@ class Oci(val region: Region,
 
     var provider = ConfigFileAuthenticationDetailsProvider(configFilePath, profile)
     var availabilityDomains: Set<AvailabilityDomain> = mutableSetOf()
-    var compartmentResource: CompartmentResource? = null
+    var tenancy: CompartmentResource? = null
 
     init {
         ociRef = this
-        compartmentResource = CompartmentResource(null, region)
-        compartmentResource?.id = compartmentId
-        availabilityDomains  =  AvailabilityDomains(this.provider, region, compartmentResource!!).get()
+        tenancy = CompartmentResource(null, region)
+        tenancy?.id = compartmentId
+        availabilityDomains  =  AvailabilityDomains(this.provider, region, tenancy!!).get()
     }
 }
 

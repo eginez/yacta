@@ -1,20 +1,69 @@
-package xyz.eginez.yacta.plugin.oci.network
+package xyz.eginez.yacta.plugin.oci
 
 import com.oracle.bmc.Region
-import com.oracle.bmc.auth.AuthenticationDetailsProvider
-import com.oracle.bmc.core.ComputeClient
-import com.oracle.bmc.core.VirtualNetworkClient
-import com.oracle.bmc.core.model.*
-import com.oracle.bmc.core.requests.*
-import com.oracle.bmc.identity.model.AvailabilityDomain
-import xyz.eginez.yacta.data.Provisioner
-import xyz.eginez.yacta.data.Resource
-import xyz.eginez.yacta.data.logger
-import xyz.eginez.yacta.plugin.oci.identity.CompartmentResource
-import xyz.eginez.yacta.plugin.oci.Oci
-import xyz.eginez.yacta.plugin.oci.OciBaseResource
-import xyz.eginez.yacta.plugin.oci.createClient
+import com.oracle.bmc.core.model.Vcn
+import xyz.eginez.yacta.core.*
+import java.util.*
 
+@YactaResource
+class VcnResource(
+        parentCompartment: CompartmentResource?,
+        region: Region) : OciBaseResource(parentCompartment, region) {
+
+    @ResourceId
+    var id: String? = null
+    @ResourceProperty
+    var cidrBlock: String? = null
+    @ResourceProperty
+    var defaultDhcpOptionsId: String? = null
+    @ResourceProperty
+    var defaultRouteTableId: String? = null
+    @ResourceProperty
+    var defaultSecurityListId: String? = null
+    @ResourceProperty
+    var definedTags: Map<String, Map<String, Any>>? = null
+    @ResourceProperty
+    var displayName: String? = null
+    @ResourceProperty
+    var dnsLabel: String? = null
+    @ResourceProperty
+    var freeformTags: Map<String, String>? = null
+    @ResourceProperty
+    var vcnDomainName: String? = null
+
+    //var routeTableResource: RouteTableResource? = null
+    var lifecycleState: Vcn.LifecycleState? = null
+    var timeCreated: Date? = null
+
+
+    override fun id(): String {
+        return id.orEmpty()
+    }
+
+    override fun currentState(): ResourceState {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+}
+
+fun Oci.vcn(region: Region = this.region,
+            compartment: CompartmentResource? = this.tenancy,
+            fn: VcnResource.() -> Unit = {}): VcnResource {
+
+    val v = VcnResource(compartment, region)
+    v.apply(fn)
+    compartment?.addChild(v)
+    return v
+}
+
+fun CompartmentResource.vcn(region: Region = this.region,
+                                                        compartment: CompartmentResource? = this,
+                                                        fn: VcnResource.() -> Unit = {}): VcnResource {
+
+    val v = VcnResource(compartment, region)
+    v.apply(fn)
+    this.addChild(v)
+    return v
+}
 /*
 
 class DefaultVcnResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Vcn> {
@@ -31,7 +80,7 @@ class DefaultVcnResourceProvisioner (configurationProvider: AuthenticationDetail
 
         var details = CreateVcnDetails.builder()
                 .cidrBlock(resource.cidrBlock)
-                .compartmentId(resource.compartment?.id)
+                .compartmentId(resource.parentCompartment?.id)
                 .displayName(resource.displayName)
 
         if (!resource.dnsLabel.isNullOrBlank()) {
@@ -83,39 +132,7 @@ class DefaultVcnResourceProvisioner (configurationProvider: AuthenticationDetail
     }
 }
 
-class VcnResource(
-        compartment: CompartmentResource?,
-        region: Region) : OciBaseResource<Vcn>(compartment, region) {
 
-    var displayName: String = ""
-    var cidrBlock: String = ""
-    var dnsLabel: String? = null
-    var id: String? = null
-    var routeTableResource: RouteTableResource? = null
-
-
-    override fun id(): String {
-        return id.orEmpty()
-    }
-
-    override fun dependencies(): List<Resource<*>> {
-        return emptyList()
-    }
-
-
-    override fun toString(): String {
-        return "VcnResource(displayName='$displayName', compartmentId='${compartment?.id}', cidrBlock='$cidrBlock', dnsLabel=$dnsLabel, id=$id)"
-    }
-}
-
-fun Oci.vcn(region: Region = this.region,
-            compartment: CompartmentResource? = this.compartmentResource,
-            fn: VcnResource.() -> Unit = {}): VcnResource {
-
-    val v = VcnResource(compartment, region)
-    v.apply(fn)
-    return v
-}
 
 
 class DefaultSubnetResourceProvisioner (configurationProvider: AuthenticationDetailsProvider ) : Provisioner<Subnet> {
@@ -133,7 +150,7 @@ class DefaultSubnetResourceProvisioner (configurationProvider: AuthenticationDet
         var builder = CreateSubnetDetails.builder()
                 .availabilityDomain(subnet.availabilityDomain.name)
                 .cidrBlock(subnet.cidrBlock)
-                .compartmentId(subnet.compartment.id)
+                .compartmentId(subnet.parentCompartment.id)
                 .vcnId(subnet.vcnId)
         subnet.name?.let { builder.displayName(it) }
 
@@ -176,7 +193,7 @@ class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
     lateinit var vcn: VcnResource
     lateinit var availabilityDomain: AvailabilityDomain
     var cidrBlock: String = ""
-    lateinit var compartment: CompartmentResource
+    lateinit var parentCompartment: CompartmentResource
     var name: String? = null
     var vcnId: String = ""
     var prohibitPubicIp: Boolean = false
@@ -204,7 +221,7 @@ class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
     }
     */
 
-    override fun dependencies(): List<Resource<*>> {
+    override fun children(): List<Resource<*>> {
         return listOf(vcn as Resource<*>)
     }
 
@@ -218,9 +235,9 @@ class SubnetResource(val client: VirtualNetworkClient) : Resource<Subnet> {
 }
 
 class VnicResource(
-        compartment: CompartmentResource?,
+        parentCompartment: CompartmentResource?,
         region: Region,
-        provisioner: Provisioner<Vnic>) : OciBaseResource<Vnic>(compartment, region, provisioner) {
+        provisioner: Provisioner<Vnic>) : OciBaseResource<Vnic>(parentCompartment, region, provisioner) {
     var subnetId: String = ""
     var publicIp: Boolean = false
     var name: String? = null
@@ -228,8 +245,8 @@ class VnicResource(
     var subnet: SubnetResource? = null
 
     override fun create() {
-        //create dependencies
-        dependencies().forEach { it.create() }
+        //create children
+        children().forEach { it.create() }
         provisioner.doCreate(this)
     }
 
@@ -241,7 +258,7 @@ class VnicResource(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun dependencies(): List<Resource<*>> {
+    override fun children(): List<Resource<*>> {
         return listOf(subnet as Resource<*>)
     }
 
@@ -293,12 +310,12 @@ class DefaultVnicResourceProvisioner (configurationProvider: AuthenticationDetai
 }
 
 fun InstanceResource.vnic(region: Region = this.region,
-                          compartment: CompartmentResource? = this.compartment,
+                          parentCompartment: CompartmentResource? = this.parentCompartment,
                           customProvisioner: Provisioner<Vnic>? = null,
                           fn: VnicResource.() -> Unit = {}): VnicResource {
 
     val provisioner  = customProvisioner ?: DefaultVnicResourceProvisioner(ociRef?.provider as AuthenticationDetailsProvider)
-    val v = VnicResource(compartment, region, provisioner )
+    val v = VnicResource(parentCompartment, region, provisioner )
     v.apply(fn)
     return v
 }
@@ -309,7 +326,7 @@ class InternetGatewayResource(val client: VirtualNetworkClient) : Resource<Inter
     var internetGateway: InternetGateway? = null
     var displayName: String? = null
     var enabled: Boolean? = null
-    lateinit var compartment: CompartmentResource
+    lateinit var parentCompartment: CompartmentResource
     lateinit var vcn: VcnResource
     var id: String = ""
 
@@ -318,9 +335,9 @@ class InternetGatewayResource(val client: VirtualNetworkClient) : Resource<Inter
     }
 
     override fun create() {
-        dependencies().forEach { it.create() }
+        children().forEach { it.create() }
         val builder = CreateInternetGatewayDetails.builder()
-        builder.compartmentId(compartment.id())
+        builder.compartmentId(parentCompartment.id())
                 .vcnId(vcn.id())
         displayName?.let { builder.displayName(it) }
         enabled?.let { builder.isEnabled(enabled) }
@@ -345,12 +362,12 @@ class InternetGatewayResource(val client: VirtualNetworkClient) : Resource<Inter
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun dependencies(): List<Resource<*>> {
+    override fun children(): List<Resource<*>> {
         return listOf(vcn as Resource<*>)
     }
 
     override fun toString(): String {
-        return "InternetGatewayResource(internetGateway=$internetGateway, displayName=$displayName, enabled=$enabled, compartmentResource=$compartment, vcn=$vcn)"
+        return "InternetGatewayResource(internetGateway=$internetGateway, displayName=$displayName, enabled=$enabled, tenancy=$parentCompartment, vcn=$vcn)"
     }
 }
 
@@ -390,7 +407,7 @@ class RouteTableResource(val client: VirtualNetworkClient) : Resource<RouteTable
 
     }
 
-    override fun dependencies(): List<Resource<*>> {
+    override fun children(): List<Resource<*>> {
         return listOf(vcn as Resource<*>)
     }
 
@@ -424,7 +441,7 @@ class RouteRuleResource : Resource<RouteRule> {
     }
 
     override fun create() {
-        dependencies().forEach { it.create() }
+        children().forEach { it.create() }
 
         val builder = RouteRule.builder()
                 .destination(destination)
@@ -445,7 +462,7 @@ class RouteRuleResource : Resource<RouteRule> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun dependencies(): List<Resource<*>> {
+    override fun children(): List<Resource<*>> {
         val deps = mutableListOf<Resource<*>>()
         ig?.let { deps.add(it) }
         return deps

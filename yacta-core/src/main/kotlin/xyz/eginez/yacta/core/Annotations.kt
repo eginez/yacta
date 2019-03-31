@@ -1,4 +1,4 @@
-package xyz.eginez.yacta.data
+package xyz.eginez.yacta.core
 
 @Target(AnnotationTarget.CLASS)
 annotation class YactaResource

@@ -1,7 +1,7 @@
 package sampleScripts
 
 import com.oracle.bmc.Region
-import xyz.eginez.yacta.data.asFile
+import xyz.eginez.yacta.core.asFile
 import xyz.eginez.yacta.plugin.oci.Oci
 
 val compartmentId = System.getenv("COMPARTMENT_ID")

@@ -1,4 +1,4 @@
-package xyz.eginez.yacta.data
+package xyz.eginez.yacta.core
 
 import java.util.logging.Logger
 import kotlin.reflect.KProperty
@@ -6,8 +6,12 @@ import kotlin.reflect.KProperty
 
 interface Resource {
     fun id(): String
-    fun dependencies(): List<Resource>
+    fun children(): List<Resource>
+    fun currentState(): ResourceState
 }
+
+
+interface ResourceState { }
 
 interface DataProvider<out T> {
     fun get(): T

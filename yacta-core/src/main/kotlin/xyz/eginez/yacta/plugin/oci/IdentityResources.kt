@@ -1,4 +1,4 @@
-package xyz.eginez.yacta.plugin.oci.identity
+package xyz.eginez.yacta.plugin.oci
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.AuthenticationDetailsProvider
@@ -6,11 +6,7 @@ import com.oracle.bmc.identity.IdentityClient
 import com.oracle.bmc.identity.model.AvailabilityDomain
 import com.oracle.bmc.identity.model.Compartment
 import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest
-import xyz.eginez.yacta.data.*
-import xyz.eginez.yacta.plugin.oci.Oci
-import xyz.eginez.yacta.plugin.oci.OciBaseResource
-import xyz.eginez.yacta.plugin.oci.createClient
-import xyz.eginez.yacta.plugin.oci.fullyList
+import xyz.eginez.yacta.core.*
 import java.util.*
 
 class AvailabilityDomains(configurationProvider: AuthenticationDetailsProvider,
@@ -36,45 +32,49 @@ class AvailabilityDomains(configurationProvider: AuthenticationDetailsProvider,
 
 @YactaResource
 class CompartmentResource(
-        compartment: CompartmentResource?,
-        region: Region) : OciBaseResource(compartment, region) {
+        parentCompartment: CompartmentResource?,
+        region: Region) : OciBaseResource(parentCompartment, region) {
 
-    @ResourceId var id: String? = null
-    @ResourceProperty var name: String? = null
-    @ResourceProperty var description: String? = null
-    @ResourceProperty var freeformTags: Map<String, String>? = null
-    @ResourceProperty var definedTags: Map<String, Map<String, Any>>? = null
+    @ResourceId
+    var id: String? = null
+    @ResourceProperty
+    var name: String? = null
+    @ResourceProperty
+    var description: String? = null
+    @ResourceProperty
+    var freeformTags: Map<String, String>? = null
+    @ResourceProperty
+    var definedTags: Map<String, Map<String, Any>>? = null
 
     //Read only
     private var lifecycleState: Compartment.LifecycleState? = null
     private var timeCreated: Date? = null
     private var inactiveStatus: Long? = null
 
-    private var childrenCompartment: MutableList<CompartmentResource> = mutableListOf()
-
 
     override fun id(): String {
         return id.orEmpty()
     }
 
-    override fun dependencies(): List<Resource> {
-        return childrenCompartment
+    override fun currentState(): ResourceState {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     fun compartment (fn: CompartmentResource.() -> Unit = {}): CompartmentResource {
         val c = CompartmentResource(this, region)
         c.apply(fn)
-        childrenCompartment.add(c)
-        return this
+        addChild(c)
+        return c
     }
 
 }
 
 fun Oci.compartment(region: Region = this.region,
-                    compartment: CompartmentResource? = this.compartmentResource,
+                    compartment: CompartmentResource? = this.tenancy,
                     fn: CompartmentResource.() -> Unit = {}): CompartmentResource {
 
     val v = CompartmentResource(compartment, region)
     v.apply(fn)
+    compartment?.addChild(v)
     return v
 }

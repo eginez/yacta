@@ -5,7 +5,7 @@ package xyz.eginez.yacta.ui
 import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngine
 import picocli.CommandLine
 import picocli.CommandLine.Command
-import xyz.eginez.yacta.data.Resource
+import xyz.eginez.yacta.core.Resource
 import java.io.File
 import javax.script.ScriptEngineManager
 

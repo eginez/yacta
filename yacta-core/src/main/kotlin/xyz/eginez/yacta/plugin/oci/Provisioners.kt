@@ -1,13 +1,13 @@
-package xyz.eginez.yacta.plugin.oci.identity
+package xyz.eginez.yacta.plugin.oci
 
 import org.jtwig.JtwigModel
 import org.jtwig.JtwigTemplate
 import org.jtwig.environment.DefaultEnvironmentConfiguration
 import org.jtwig.environment.EnvironmentFactory
 import org.jtwig.resource.reference.ResourceReference
-import xyz.eginez.yacta.data.Provisioner
-import xyz.eginez.yacta.data.Resource
-import xyz.eginez.yacta.data.ResourceProperty
+import xyz.eginez.yacta.core.Provisioner
+import xyz.eginez.yacta.core.Resource
+import xyz.eginez.yacta.core.ResourceProperty
 import java.io.Writer
 import kotlin.reflect.KClass
 import kotlin.reflect.full.*
@@ -43,9 +43,10 @@ fun toTFRes(name: String, r: Any): TFResource {
 
 interface TerraformProvisioner
 
-class DefaultTFProvisioner<T> (val writer: Writer,
-                                 val terraformResourceName: String,
-                                 val terraformResourceTemplate: String): Provisioner<T>, TerraformProvisioner  {
+class DefaultTerraformProvisioner<T> (val writer: Writer,
+                                      val terraformResourceName: String,
+                                      val terraformResourceTemplate: String,
+                                      val propertyNamesOverrides: Map<String, String>? = null ): Provisioner<T>, TerraformProvisioner {
 
     override fun doCreate(resource: Resource) {
         val tfRes = provision(terraformResourceName,  resource, terraformResourceTemplate)
@@ -83,7 +84,7 @@ fun <T: Resource, M> createTerraformProvisionerFor(writer: Writer, klass: KClass
 
     when {
         klass == CompartmentResource::class -> {
-            val compartmentProvisioner = DefaultTFProvisioner<M>(
+            val compartmentProvisioner = DefaultTerraformProvisioner<M>(
                     terraformResourceName = "oci_identity_compartment",
                     terraformResourceTemplate = """
 resource "{{ resource.name }}" "create_name" { {% for k,val in resource.properties  %}
@@ -92,6 +93,17 @@ resource "{{ resource.name }}" "create_name" { {% for k,val in resource.properti
 """,
                     writer = writer)
             return compartmentProvisioner
+        }
+        klass == VcnResource::class -> {
+            val vcnProvisioner = DefaultTerraformProvisioner<M> (
+                    terraformResourceName = "oci_network_vcn",
+                    terraformResourceTemplate = """
+resource "{{ resource.name }}" "create_name" { {% for k,val in resource.properties  %}
+    "{{ k }}" = "{{ val }}" {% endfor %}
+}
+""",
+            writer=writer)
+            return vcnProvisioner
         }
     }
     return null
