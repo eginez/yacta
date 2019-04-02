@@ -1,7 +1,10 @@
 package xyz.eginez.yacta.plugin.oci
 
 import com.oracle.bmc.Region
+import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
+import com.oracle.bmc.core.VirtualNetworkClient
 import com.oracle.bmc.core.model.Vcn
+import com.oracle.bmc.core.requests.GetVcnRequest
 import xyz.eginez.yacta.core.*
 import java.util.*
 
@@ -43,6 +46,17 @@ class VcnResource(
     override fun currentState(): ResourceState {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override fun refresh() {
+        val configurationProvider = ConfigFileAuthenticationDetailsProvider("DEFAULT")
+        val client = createClient<VirtualNetworkClient>(configurationProvider, region, VirtualNetworkClient.builder())
+        val req = GetVcnRequest.builder()
+                .vcnId(id())
+                .build()
+        val c = client.getVcn(req).vcn
+        id = c.id
+        displayName = c.displayName
+    }
 }
 
 fun Oci.vcn(region: Region = this.region,
@@ -56,8 +70,8 @@ fun Oci.vcn(region: Region = this.region,
 }
 
 fun CompartmentResource.vcn(region: Region = this.region,
-                                                        compartment: CompartmentResource? = this,
-                                                        fn: VcnResource.() -> Unit = {}): VcnResource {
+                            compartment: CompartmentResource? = this,
+                            fn: VcnResource.() -> Unit = {}): VcnResource {
 
     val v = VcnResource(compartment, region)
     v.apply(fn)

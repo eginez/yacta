@@ -7,6 +7,7 @@ import xyz.eginez.yacta.core.Resource
 import xyz.eginez.yacta.core.ResourceProperty
 import xyz.eginez.yacta.core.logger
 import java.nio.file.Paths
+import kotlin.reflect.KClass
 
 @DslMarker
 annotation class ResourceMarker
@@ -21,7 +22,6 @@ abstract class OciBaseResource(
 
     fun addChild(r: Resource) = children.add(r)
     override fun children(): List<Resource> =  children
-
 }
 
 var ociRef: Oci? = null

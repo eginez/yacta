@@ -1,6 +1,7 @@
 package xyz.eginez.yacta.core
 
 import java.util.logging.Logger
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 
@@ -8,6 +9,7 @@ interface Resource {
     fun id(): String
     fun children(): List<Resource>
     fun currentState(): ResourceState
+    fun refresh()
 }
 
 

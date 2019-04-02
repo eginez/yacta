@@ -1,5 +1,12 @@
 package xyz.eginez.yacta.plugin.oci
 
+import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider
+import com.oracle.bmc.core.VirtualNetworkClient
+import com.oracle.bmc.core.model.Vcn
+import com.oracle.bmc.core.requests.GetVcnRequest
+import com.oracle.bmc.identity.IdentityClient
+import com.oracle.bmc.identity.model.Compartment
+import com.oracle.bmc.identity.requests.GetCompartmentRequest
 import org.jtwig.JtwigModel
 import org.jtwig.JtwigTemplate
 import org.jtwig.environment.DefaultEnvironmentConfiguration
@@ -46,7 +53,8 @@ interface TerraformProvisioner
 class DefaultTerraformProvisioner<T> (val writer: Writer,
                                       val terraformResourceName: String,
                                       val terraformResourceTemplate: String,
-                                      val propertyNamesOverrides: Map<String, String>? = null ): Provisioner<T>, TerraformProvisioner {
+                                      val propertyNamesOverrides: Map<String, String>? = null,
+                                      val getter: (Resource) -> T = { TODO("not implemented") }): Provisioner<T>, TerraformProvisioner {
 
     override fun doCreate(resource: Resource) {
         val tfRes = provision(terraformResourceName,  resource, terraformResourceTemplate)
@@ -62,7 +70,7 @@ class DefaultTerraformProvisioner<T> (val writer: Writer,
     }
 
     override fun doGet(resource: Resource): T {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return getter(resource)
     }
 
     fun provision(name: String, r: Any, template: String): String {
@@ -102,7 +110,7 @@ resource "{{ resource.name }}" "create_name" { {% for k,val in resource.properti
     "{{ k }}" = "{{ val }}" {% endfor %}
 }
 """,
-            writer=writer)
+                    writer=writer)
             return vcnProvisioner
         }
     }
