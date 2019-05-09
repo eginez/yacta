@@ -19,6 +19,7 @@ mainClassName = 'xyz.eginez.yacta.ui.MainCli'
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {

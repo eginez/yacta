@@ -30,13 +30,13 @@ class YactaCreate : Runnable {
         println("Processing script: ${file?.absolutePath}")
         val resource = evaluateScript(scriptEngine, file?.readText())
         println(resource)
-        resource.create()
+        //resource.create()
     }
 }
 
-fun evaluateScript(engine: KotlinJsr223JvmLocalScriptEngine, content: String?): Resource<*> {
+fun evaluateScript(engine: KotlinJsr223JvmLocalScriptEngine, content: String?): Resource {
     check(content != null, { "script content can not be empty" })
-    val script = engine.eval(content) as? Resource<*>
+    val script = engine.eval(content) as? Resource
             ?: throw Exception("Script should return a Resource")
     return script
 }
